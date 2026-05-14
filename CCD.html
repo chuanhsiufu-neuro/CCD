@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>神經科檢查報告系統 v5.2 (Midline/TCCS 精修版)</title>
+    <title>神經科檢查報告系統 v5.3 (Midline/TCCS 精修版 v2)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .report-textarea { font-family: 'Courier New', Courier, monospace; min-height: 650px; white-space: pre-wrap; }
@@ -17,7 +17,7 @@
 <body class="bg-gray-100 flex flex-col h-screen overflow-hidden">
 
     <header class="bg-slate-800 text-white p-4 shadow-md flex justify-between items-center z-20">
-        <h1 class="text-xl font-bold tracking-wide">Neuro-Reporting System v5.2</h1>
+        <h1 class="text-xl font-bold tracking-wide">Neuro-Reporting System v5.3</h1>
         <button onclick="copyCleanReport()" class="bg-green-600 hover:bg-green-500 text-white px-6 py-2 rounded shadow transition font-bold">複製報告 (自動過濾標籤)</button>
     </header>
 
@@ -167,6 +167,11 @@
                             </div>
                         </div>
 
+                        <!-- OA (新增) -->
+                        <div class="pt-1 border-t mt-2">
+                            <label class="flex items-center gap-1 font-bold text-green-700"><input type="checkbox" id="chk_tccs_oa" onchange="updateReport()"> Ophthalmic Artery (OA)</label>
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -258,7 +263,7 @@
             if (isTCCS) {
                 pairs.forEach(base => {
                     if (names.includes("right " + base) && names.includes("left " + base)) {
-                        result.push(`bilateral ${base === 'VA' ? 'VAs' : base + 's'}`); // 依常理加s
+                        result.push(`bilateral ${base === 'VA' ? 'VAs' : base + 's'}`); 
                         seen.add("right " + base); seen.add("left " + base);
                     }
                 });
@@ -295,7 +300,8 @@
 
             let shiftStr = "___, ___ to ___";
             if (!isNaN(a) && !isNaN(b)) {
-                let shiftVal = Math.abs(a - b).toFixed(2);
+                // 修改：Shift = (大減小) / 2
+                let shiftVal = (Math.abs(a - b) / 2).toFixed(2);
                 if (a > b) shiftStr = `${shiftVal} cm, left to right`;
                 else if (b > a) shiftStr = `${shiftVal} cm, right to left`;
                 else shiftStr = "0 cm, no shift";
@@ -306,7 +312,6 @@
             finalStr += `Right temporal bone to 3rd ventricle: ${bRaw || '___'} cm\n`;
             finalStr += `Midline shift: ${shiftStr}.\n`;
             
-            // 3rd ventricle (有輸入才顯示)
             if (!isNaN(d)) {
                 let dStr = "";
                 if (d < 0.6) dStr = `${d} cm < 0.6cm, no ventricular dilatation.`;
@@ -323,7 +328,6 @@
                 const velList = [];
                 document.querySelectorAll('.tccs-chk-grid_vel:checked').forEach(chk => {
                     const numInput = chk.closest('div').querySelector('.tccs-psv-grid_vel').value;
-                    // 有填入數值才附帶括號
                     if (numInput) velList.push(`${chk.value} (PSV= ${numInput} cm/sec)`);
                     else velList.push(chk.value);
                 });
@@ -366,9 +370,14 @@
 
             if (document.getElementById('chk_tccs_poor').checked) {
                 const poorSide = document.querySelector('input[name="tccs_poor_side"]:checked').value;
-                // Bilateral 用 windows, 單側用 window
                 const winNoun = poorSide === 'bilateral' ? 'windows' : 'window';
                 tccsLines.push(`${index}. Poor ${poorSide} temporal ${winNoun}.`);
+                index++;
+            }
+
+            // 新增 OA 的結論
+            if (document.getElementById('chk_tccs_oa').checked) {
+                tccsLines.push(`${index}. Normal flow direction in bilateral ophthalmic arteries.`);
                 index++;
             }
 
