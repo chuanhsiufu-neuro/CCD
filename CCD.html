@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>神經科檢查報告系統 v5.5 (Bilateral 智慧排版版)</title>
+    <title>神經科檢查報告系統 v6.0 (NCV 擴充與智慧排版版)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .report-textarea { font-family: 'Courier New', Courier, monospace; min-height: 650px; white-space: pre-wrap; }
@@ -12,12 +12,14 @@
         .tccs-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; padding: 10px; background: #f8fafc; border-radius: 6px; border: 1px solid #e2e8f0; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        /* 針對 NCV 的緊湊表單 */
+        .ncv-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
     </style>
 </head>
 <body class="bg-gray-100 flex flex-col h-screen overflow-hidden">
 
     <header class="bg-slate-800 text-white p-4 shadow-md flex justify-between items-center z-20">
-        <h1 class="text-xl font-bold tracking-wide">Neuro-Reporting System v5.5</h1>
+        <h1 class="text-xl font-bold tracking-wide">Neuro-Reporting System v6.0</h1>
         <button onclick="copyCleanReport()" class="bg-green-600 hover:bg-green-500 text-white px-6 py-2 rounded shadow transition font-bold">複製報告 (自動過濾標籤)</button>
     </header>
 
@@ -99,7 +101,6 @@
 
             <!-- 【Midline/TCCS 表單】 -->
             <div id="form-TCD" class="form-section hidden">
-                <!-- 1. Midline 區塊 -->
                 <div class="input-card border-t-4 border-t-teal-500">
                     <label class="block font-bold text-teal-800 mb-2 border-b pb-1 text-base">1. Midline Measurement</label>
                     <div class="space-y-3 text-sm">
@@ -118,12 +119,11 @@
                     </div>
                 </div>
 
-                <!-- 2. TCCS 區塊 -->
                 <div class="input-card border-t-4 border-t-purple-500">
                     <label class="block font-bold text-purple-800 mb-2 border-b pb-1 text-base">2. TCCS (報告屬性)</label>
                     <div class="space-y-3 text-sm">
                         
-                        <!-- 1. Poor Window (移至最上) -->
+                        <!-- 1. Poor Window (置頂) -->
                         <div class="pt-1">
                             <label class="flex items-center gap-1 font-bold text-slate-800"><input type="checkbox" id="chk_tccs_poor" onchange="toggleModule('tccs_poor_area', 'chk_tccs_poor')"> Poor window</label>
                             <div id="tccs_poor_area" class="hidden sub-input-box border-slate-400">
@@ -135,12 +135,7 @@
                             </div>
                         </div>
 
-                        <!-- 2. OA (跟隨 Poor Window) -->
-                        <div class="pt-1">
-                            <label class="flex items-center gap-1 font-bold text-green-700"><input type="checkbox" id="chk_tccs_oa" onchange="updateReport()"> Ophthalmic Artery (OA)</label>
-                        </div>
-
-                        <!-- 3. High Velocity -->
+                        <!-- 2. High Velocity -->
                         <div class="pt-1 border-t mt-2">
                             <label class="flex items-center gap-1 font-bold text-red-600"><input type="checkbox" id="chk_tccs_vel" onchange="toggleModule('tccs_vel_area', 'chk_tccs_vel')"> Increased flow velocity</label>
                             <div id="tccs_vel_area" class="hidden sub-input-box border-red-400 text-xs">
@@ -148,7 +143,7 @@
                             </div>
                         </div>
 
-                        <!-- 4. Resistance -->
+                        <!-- 3. Resistance -->
                         <div class="pt-1">
                             <label class="flex items-center gap-1 font-bold text-orange-600"><input type="checkbox" id="chk_tccs_res" onchange="toggleModule('tccs_res_area', 'chk_tccs_res')"> Increased flow resistance</label>
                             <div id="tccs_res_area" class="hidden sub-input-box border-orange-400 text-xs">
@@ -156,16 +151,16 @@
                             </div>
                         </div>
 
-                        <!-- 5. Reduced Velocity -->
+                        <!-- 4. Reduced Velocity -->
                         <div class="pt-1">
                             <label class="flex items-center gap-1 font-bold text-blue-600"><input type="checkbox" id="chk_tccs_red" onchange="toggleModule('tccs_red_area', 'chk_tccs_red')"> Reduced mean flow velocity</label>
                             <div id="tccs_red_area" class="hidden sub-input-box border-blue-400 text-xs">
                                 <div id="grid_red" class="tccs-grid mb-2"></div>
-                                <label class="col-span-2 border-t border-blue-200 pt-2 font-bold text-blue-700 flex items-center gap-1"><input type="checkbox" id="chk_tccs_red_gen" onchange="updateReport()"> Generalized (套用多發性狹窄結論)</label>
+                                <label class="col-span-2 border-t border-blue-200 pt-2 font-bold text-blue-700 flex items-center gap-1"><input type="checkbox" id="chk_tccs_red_gen" onchange="updateReport()"> Generalized</label>
                             </div>
                         </div>
 
-                        <!-- 6. Not Visualized -->
+                        <!-- 5. Not Visualized -->
                         <div class="pt-1">
                             <label class="flex items-center gap-1 font-bold text-gray-600"><input type="checkbox" id="chk_tccs_not" onchange="toggleModule('tccs_not_area', 'chk_tccs_not')"> Not visualized</label>
                             <div id="tccs_not_area" class="hidden sub-input-box border-gray-400 text-xs">
@@ -173,12 +168,97 @@
                             </div>
                         </div>
 
+                        <!-- 6. OA (置底) -->
+                        <div class="pt-1 border-t mt-2">
+                            <label class="flex items-center gap-1 font-bold text-green-700"><input type="checkbox" id="chk_tccs_oa" onchange="updateReport()"> Ophthalmic Artery (OA)</label>
+                        </div>
+
                     </div>
                 </div>
             </div>
 
+            <!-- 【NCV 表單】 -->
+            <div id="form-NCV" class="form-section hidden">
+                
+                <!-- 上肢 -->
+                <div class="input-card border-t-4 border-t-blue-500">
+                    <label class="flex items-center gap-2 font-bold text-blue-800 mb-2 border-b pb-1 text-base cursor-pointer">
+                        <input type="checkbox" id="chk_ncv_upper" onchange="toggleModule('ncv_upper_area', 'chk_ncv_upper')"> 1. 上肢 (Upper Limb)
+                    </label>
+                    <div id="ncv_upper_area" class="hidden space-y-3 text-sm">
+                        <div class="flex gap-4 bg-slate-50 p-2 rounded border">
+                            <label><input type="radio" name="ncv_up_type" value="Normal" checked onchange="updateReport()"> Normal</label>
+                            <label><input type="radio" name="ncv_up_type" value="Abnormal" onchange="updateReport()"> Abnormal</label>
+                        </div>
+                        <div id="ncv_up_abnormal_area" class="hidden space-y-4">
+                            <div>
+                                <h4 class="font-bold text-red-600 bg-red-50 p-1 border-l-4 border-red-400 mb-2">Motor</h4>
+                                <div id="ncv_up_motor" class="space-y-3"></div>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-blue-600 bg-blue-50 p-1 border-l-4 border-blue-400 mb-2">Sensory</h4>
+                                <div id="ncv_up_sensory" class="space-y-3"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 下肢 -->
+                <div class="input-card border-t-4 border-t-green-500">
+                    <label class="flex items-center gap-2 font-bold text-green-800 mb-2 border-b pb-1 text-base cursor-pointer">
+                        <input type="checkbox" id="chk_ncv_lower" onchange="toggleModule('ncv_lower_area', 'chk_ncv_lower')"> 2. 下肢 (Lower Limb)
+                    </label>
+                    <div id="ncv_lower_area" class="hidden space-y-3 text-sm">
+                        <div class="flex gap-4 bg-slate-50 p-2 rounded border">
+                            <label><input type="radio" name="ncv_low_type" value="Normal" checked onchange="updateReport()"> Normal</label>
+                            <label><input type="radio" name="ncv_low_type" value="Abnormal" onchange="updateReport()"> Abnormal</label>
+                        </div>
+                        <div id="ncv_low_abnormal_area" class="hidden space-y-4">
+                            <div>
+                                <h4 class="font-bold text-red-600 bg-red-50 p-1 border-l-4 border-red-400 mb-2">Motor</h4>
+                                <div id="ncv_low_motor" class="space-y-3"></div>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-blue-600 bg-blue-50 p-1 border-l-4 border-blue-400 mb-2">Sensory</h4>
+                                <div id="ncv_low_sensory" class="space-y-3"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- F/H -->
+                <div class="input-card border-t-4 border-t-purple-500">
+                    <label class="flex items-center gap-2 font-bold text-purple-800 mb-2 border-b pb-1 text-base cursor-pointer">
+                        <input type="checkbox" id="chk_ncv_fh" onchange="toggleModule('ncv_fh_area', 'chk_ncv_fh')"> 3. F-wave & H-reflex
+                    </label>
+                    <div id="ncv_fh_area" class="hidden space-y-3 text-sm">
+                        <div class="flex gap-4 bg-slate-50 p-2 rounded border">
+                            <label><input type="radio" name="ncv_fh_type" value="Normal" checked onchange="updateReport()"> Normal</label>
+                            <label><input type="radio" name="ncv_fh_type" value="Abnormal" onchange="updateReport()"> Abnormal</label>
+                        </div>
+                        <div id="ncv_fh_abnormal_area" class="hidden space-y-3">
+                            <div class="bg-purple-50 p-3 rounded border border-purple-200 text-xs">
+                                <h4 class="font-bold text-purple-700 mb-2">Prolonged minimal F-wave latencies</h4>
+                                <div id="ncv_fh_fwave" class="grid grid-cols-2 gap-2"></div>
+                            </div>
+                            <div class="bg-indigo-50 p-3 rounded border border-indigo-200 text-xs">
+                                <h4 class="font-bold text-indigo-700 mb-2">Presence of A-wave</h4>
+                                <div id="ncv_fh_awave" class="grid grid-cols-2 gap-2"></div>
+                            </div>
+                            <div class="bg-fuchsia-50 p-3 rounded border border-fuchsia-200 text-xs">
+                                <h4 class="font-bold text-fuchsia-700 mb-2">Prolonged H-reflex latencies (Tibial)</h4>
+                                <div class="flex gap-4">
+                                    <label><input type="checkbox" id="chk_fh_h_r" onchange="updateReport()"> Right</label>
+                                    <label><input type="checkbox" id="chk_fh_h_l" onchange="updateReport()"> Left</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
             <!-- 其他預留表單 -->
-            <div id="form-NCV" class="form-section hidden"><p class="text-gray-500 italic p-4 text-center">【NCV】表單建置中...</p></div>
             <div id="form-RST" class="form-section hidden"><p class="text-gray-500 italic p-4 text-center">【RST】表單建置中...</p></div>
             <div id="form-SSR_RRIV" class="form-section hidden"><p class="text-gray-500 italic p-4 text-center">【SSR/RRIV】表單建置中...</p></div>
             <div id="form-SSEP_UL" class="form-section hidden"><p class="text-gray-500 italic p-4 text-center">【SSEP UL】表單建置中...</p></div>
@@ -195,8 +275,56 @@
     </main>
 
     <script>
-        // --- 初始化 TCCS ---
         let currentTab = 'CCD';
+
+        // --- NCV UI 生成器 ---
+        const upMotorFindings = ['Prolonged distal motor latency', 'Reduced CMAP amplitude', 'Slowing of motor conduction velocity'];
+        const upSensoryFindings = ['Reduced SAP amplitude', 'Slowing of sensory conduction velocity'];
+        
+        function buildNCVNerveBlock(containerId, nerves, findings, region) {
+            const container = document.getElementById(containerId);
+            let html = '';
+            nerves.forEach(nerve => {
+                html += `<div class="border-b border-gray-200 pb-2 mb-2">
+                    <div class="font-bold text-gray-700 capitalize mb-1">${nerve} nerve</div>
+                    <div class="ncv-grid">
+                        <div class="bg-white p-2 rounded shadow-sm border border-gray-200">
+                            <div class="text-xs font-bold text-slate-500 border-b pb-1 mb-1">Right</div>
+                            ${findings.map(f => `<label class="flex items-start gap-1 text-xs mb-1 text-gray-600 leading-tight cursor-pointer"><input type="checkbox" class="ncv-chk" data-region="${region}" data-nerve="${nerve}" data-side="right" data-finding="${f}" onchange="updateReport()"> <span>${f}</span></label>`).join('')}
+                        </div>
+                        <div class="bg-white p-2 rounded shadow-sm border border-gray-200">
+                            <div class="text-xs font-bold text-slate-500 border-b pb-1 mb-1">Left</div>
+                            ${findings.map(f => `<label class="flex items-start gap-1 text-xs mb-1 text-gray-600 leading-tight cursor-pointer"><input type="checkbox" class="ncv-chk" data-region="${region}" data-nerve="${nerve}" data-side="left" data-finding="${f}" onchange="updateReport()"> <span>${f}</span></label>`).join('')}
+                        </div>
+                    </div>
+                </div>`;
+            });
+            container.innerHTML = html;
+        }
+
+        // 建立 NCV 區塊
+        buildNCVNerveBlock('ncv_up_motor', ['median', 'ulnar', 'radial'], upMotorFindings, 'up_motor');
+        buildNCVNerveBlock('ncv_up_sensory', ['median', 'ulnar', 'radial'], upSensoryFindings, 'up_sensory');
+        buildNCVNerveBlock('ncv_low_motor', ['peroneal', 'tibial'], upMotorFindings, 'low_motor');
+        buildNCVNerveBlock('ncv_low_sensory', ['superficial peroneal', 'sural'], upSensoryFindings, 'low_sensory');
+
+        // 建立 F-wave / A-wave 區塊
+        const fhNerves = ['median', 'ulnar', 'peroneal', 'tibial'];
+        let fhFHtml = ''; let fhAHtml = '';
+        fhNerves.forEach(n => {
+            fhFHtml += `<div class="bg-white p-1.5 border rounded flex justify-between items-center"><span class="capitalize font-bold text-gray-600">${n}</span> <div class="flex gap-2"><label><input type="checkbox" class="fh-f-chk" data-n="${n}" data-s="right" onchange="updateReport()"> R</label><label><input type="checkbox" class="fh-f-chk" data-n="${n}" data-s="left" onchange="updateReport()"> L</label></div></div>`;
+            fhAHtml += `<div class="bg-white p-1.5 border rounded flex justify-between items-center"><span class="capitalize font-bold text-gray-600">${n}</span> <div class="flex gap-2"><label><input type="checkbox" class="fh-a-chk" data-n="${n}" data-s="right" onchange="updateReport()"> R</label><label><input type="checkbox" class="fh-a-chk" data-n="${n}" data-s="left" onchange="updateReport()"> L</label></div></div>`;
+        });
+        document.getElementById('ncv_fh_fwave').innerHTML = fhFHtml;
+        document.getElementById('ncv_fh_awave').innerHTML = fhAHtml;
+
+        // NCV Radio 切換監聽
+        document.querySelectorAll('input[name="ncv_up_type"]').forEach(r => r.addEventListener('change', () => document.getElementById('ncv_up_abnormal_area').classList.toggle('hidden', r.value==='Normal')));
+        document.querySelectorAll('input[name="ncv_low_type"]').forEach(r => r.addEventListener('change', () => document.getElementById('ncv_low_abnormal_area').classList.toggle('hidden', r.value==='Normal')));
+        document.querySelectorAll('input[name="ncv_fh_type"]').forEach(r => r.addEventListener('change', () => document.getElementById('ncv_fh_abnormal_area').classList.toggle('hidden', r.value==='Normal')));
+
+
+        // --- 初始化 TCCS ---
         const tccsBaseVessels = ["MCA M1", "MCA M2", "ACA", "PCA P1", "PCA P2", "VA"];
         const tccsAllVessels = [];
         tccsBaseVessels.forEach(v => { tccsAllVessels.push("right " + v); tccsAllVessels.push("left " + v); });
@@ -208,9 +336,7 @@
                 const wrapper = document.createElement('div');
                 wrapper.className = "flex items-center gap-1";
                 let inner = `<label class="flex items-center gap-1 whitespace-nowrap"><input type="checkbox" class="tccs-chk-${containerId}" value="${v}" onchange="updateReport()"> ${v.replace('right ','R-').replace('left ','L-')}</label>`;
-                if (withPsv) {
-                    inner += `<input type="number" class="tccs-psv-${containerId} border p-1 w-12 ml-auto rounded hidden" placeholder="PSV" oninput="updateReport()">`;
-                }
+                if (withPsv) inner += `<input type="number" class="tccs-psv-${containerId} border p-1 w-12 ml-auto rounded hidden" placeholder="PSV" oninput="updateReport()">`;
                 wrapper.innerHTML = inner;
                 if(withPsv){
                     const chk = wrapper.querySelector('input[type="checkbox"]');
@@ -270,23 +396,16 @@
             if (names.length === 0) return "___";
             const baseNames = isTCCS ? ["MCA M1", "MCA M2", "ACA", "PCA P1", "PCA P2", "VA"]
                                      : ["CCA", "carotid bulb", "ICA", "ECA"];
-
-            let bilateralBases = [];
-            let rightBases = [];
-            let leftBases = [];
-            let otherBases = []; // BA or standalone
+            let bilateralBases = []; let rightBases = []; let leftBases = []; let otherBases = [];
             let processedNames = new Set();
 
-            // 1. 偵測 Bilateral
             baseNames.forEach(base => {
                 if (names.includes("right " + base) && names.includes("left " + base)) {
                     bilateralBases.push(base + "s");
-                    processedNames.add("right " + base);
-                    processedNames.add("left " + base);
+                    processedNames.add("right " + base); processedNames.add("left " + base);
                 }
             });
 
-            // 2. 分類單側
             names.forEach(name => {
                 if (processedNames.has(name)) return;
                 if (name.startsWith("right ")) rightBases.push(name.substring(6));
@@ -294,13 +413,11 @@
                 else otherBases.push(name);
             });
 
-            // 3. 組裝文字 (Bilateral -> Right -> Left -> Other)
             let parts = [];
             if (bilateralBases.length > 0) parts.push("bilateral " + joinAndHelper(bilateralBases));
             if (rightBases.length > 0) parts.push("right " + joinAndHelper(rightBases));
             if (leftBases.length > 0) parts.push("left " + joinAndHelper(leftBases));
             if (otherBases.length > 0) parts.push(joinAndHelper(otherBases));
-
             return joinAndHelper(parts);
         }
 
@@ -309,7 +426,112 @@
             const reportBox = document.getElementById('reportBox');
             if (currentTab === 'CCD') generateCCDReport(reportBox);
             else if (currentTab === 'TCD') generateTCDReport(reportBox);
-            else reportBox.value = `[系統提示]\n\n【${currentTab.replace('_', '/')}】 報告專屬邏輯與範本尚在建置中...\n請先切換至 CCD 或 Midline/TCCS 使用。`;
+            else if (currentTab === 'NCV') generateNCVReport(reportBox);
+            else reportBox.value = `[系統提示]\n\n【${currentTab.replace('_', '/')}】 報告專屬邏輯與範本尚在建置中...\n請先切換至 CCD, Midline/TCCS 或 NCV 使用。`;
+        }
+
+        // --- NCV 報告邏輯 ---
+        function generateNCVReport(reportBox) {
+            let finalStr = `[NCV]:\n`;
+            let hasContent = false;
+
+            // Helper: 格式化神經句子
+            function buildNerveSentence(findings, side, nerve) {
+                // 第一個大寫，後續小寫
+                const formatted = findings.map((f, i) => i === 0 ? f : f.charAt(0).toLowerCase() + f.slice(1));
+                let fText = "";
+                if (formatted.length === 1) fText = formatted[0];
+                else { const last = formatted.pop(); fText = formatted.join(", ") + " and " + last; }
+                const plural = (side === 'bilateral') ? 's' : '';
+                return `${fText} in the ${side} ${nerve} nerve${plural}.`;
+            }
+
+            function processNCVRegion(regionId, nerveList) {
+                let lines = [];
+                nerveList.forEach(nerve => {
+                    const rFindings = Array.from(document.querySelectorAll(`.ncv-chk[data-region="${regionId}"][data-nerve="${nerve}"][data-side="right"]:checked`)).map(e => e.dataset.finding);
+                    const lFindings = Array.from(document.querySelectorAll(`.ncv-chk[data-region="${regionId}"][data-nerve="${nerve}"][data-side="left"]:checked`)).map(e => e.dataset.finding);
+                    
+                    const rStr = rFindings.join('|');
+                    const lStr = lFindings.join('|');
+
+                    if (rStr && rStr === lStr) {
+                        lines.push(buildNerveSentence(rFindings, "bilateral", nerve));
+                    } else {
+                        if (rFindings.length > 0) lines.push(buildNerveSentence(rFindings, "right", nerve));
+                        if (lFindings.length > 0) lines.push(buildNerveSentence(lFindings, "left", nerve));
+                    }
+                });
+                return lines;
+            }
+
+            // 1. 上肢
+            if (document.getElementById('chk_ncv_upper').checked) {
+                hasContent = true;
+                if (document.querySelector('input[name="ncv_up_type"]:checked').value === 'Normal') {
+                    finalStr += `The results of the NCV and F-wave studies were within normal limits.\n\n`;
+                } else {
+                    let lines = [];
+                    lines = lines.concat(processNCVRegion('up_motor', ['median', 'ulnar', 'radial']));
+                    lines = lines.concat(processNCVRegion('up_sensory', ['median', 'ulnar', 'radial']));
+                    if(lines.length > 0) finalStr += lines.join("\n") + "\n\n";
+                }
+            }
+
+            // 2. 下肢
+            if (document.getElementById('chk_ncv_lower').checked) {
+                hasContent = true;
+                if (document.querySelector('input[name="ncv_low_type"]:checked').value === 'Normal') {
+                    finalStr += `The results of the NCV, F-wave and H-reflex studies were within normal limits.\n\n`;
+                } else {
+                    let lines = [];
+                    lines = lines.concat(processNCVRegion('low_motor', ['peroneal', 'tibial']));
+                    lines = lines.concat(processNCVRegion('low_sensory', ['superficial peroneal', 'sural']));
+                    if(lines.length > 0) finalStr += lines.join("\n") + "\n\n";
+                }
+            }
+
+            // 3. F-wave / H-reflex
+            if (document.getElementById('chk_ncv_fh').checked) {
+                hasContent = true;
+                if (document.querySelector('input[name="ncv_fh_type"]:checked').value === 'Normal') {
+                    finalStr += `The results of F-wave studies were within normal limits.\nThe results of H reflex studies were within normal limits.\n\n`;
+                } else {
+                    // Helper for FH Nerves
+                    function getFHNerveStr(className) {
+                        let res = [];
+                        fhNerves.forEach(n => {
+                            let r = document.querySelector(`.${className}[data-n="${n}"][data-s="right"]`).checked;
+                            let l = document.querySelector(`.${className}[data-n="${n}"][data-s="left"]`).checked;
+                            if(r && l) res.push("bilateral " + n);
+                            else if(r) res.push("right " + n);
+                            else if(l) res.push("left " + n);
+                        });
+                        if(res.length === 0) return "";
+                        let isPlural = res.length > 1 || res[0].includes("bilateral");
+                        let text = joinAndHelper(res);
+                        return text + (isPlural ? " nerves" : " nerve");
+                    }
+
+                    let fwaveStr = getFHNerveStr('fh-f-chk');
+                    if(fwaveStr) finalStr += `The results of the F-wave study showed prolonged minimal F-wave latencies in the ${fwaveStr}.\n`;
+
+                    let awaveStr = getFHNerveStr('fh-a-chk');
+                    if(awaveStr) finalStr += `Presence of A-wave in the ${awaveStr}.\n`;
+
+                    // H-reflex (Tibial only)
+                    let hr = document.getElementById('chk_fh_h_r').checked;
+                    let hl = document.getElementById('chk_fh_h_l').checked;
+                    if(hr || hl) {
+                        let hSide = (hr && hl) ? "bilateral" : (hr ? "right" : "left");
+                        let plural = (hr && hl) ? "s" : "";
+                        finalStr += `The results of the H-reflex study showed prolonged H-reflex latencies in the ${hSide} tibial nerve${plural}.\n`;
+                    }
+                }
+            }
+
+            if(!hasContent) finalStr += "請在左側勾選並填寫屬性...";
+            reportBox.value = finalStr.trim();
         }
 
         // --- TCD / Midline 邏輯 ---
@@ -319,9 +541,7 @@
             const aRaw = document.getElementById('tcd_mid_l').value;
             const bRaw = document.getElementById('tcd_mid_r').value;
             const dRaw = document.getElementById('tcd_mid_d').value;
-            const a = parseFloat(aRaw);
-            const b = parseFloat(bRaw);
-            const d = parseFloat(dRaw);
+            const a = parseFloat(aRaw); const b = parseFloat(bRaw); const d = parseFloat(dRaw);
 
             let shiftStr = "___, ___ to ___";
             if (!isNaN(a) && !isNaN(b)) {
@@ -337,59 +557,36 @@
             finalStr += `Midline shift: ${shiftStr}.\n`;
             
             if (!isNaN(d)) {
-                let dStr = "";
-                if (d < 0.6) dStr = `${d} cm < 0.6cm, no ventricular dilatation.`;
-                else dStr = `${d} cm >= 0.6cm, dilated 3rd ventricle, suspected hydrocephalus.`;
+                let dStr = (d < 0.6) ? `${d} cm < 0.6cm, no ventricular dilatation.` : `${d} cm >= 0.6cm, dilated 3rd ventricle, suspected hydrocephalus.`;
                 finalStr += `3rd ventricle diameter: ${dStr}\n`;
             }
             finalStr += `\n`;
 
-            // TCCS
-            let tccsLines = [];
-            let index = 1;
+            let tccsLines = []; let index = 1;
 
-            // 1. Poor Window
             if (document.getElementById('chk_tccs_poor').checked) {
                 const poorSide = document.querySelector('input[name="tccs_poor_side"]:checked').value;
-                const winNoun = poorSide === 'bilateral' ? 'windows' : 'window';
-                tccsLines.push(`${index}. Poor ${poorSide} temporal ${winNoun}.`);
+                tccsLines.push(`${index}. Poor ${poorSide} temporal ${poorSide === 'bilateral' ? 'windows' : 'window'}.`);
                 index++;
             }
 
-            // 2. OA
-            if (document.getElementById('chk_tccs_oa').checked) {
-                tccsLines.push(`${index}. Normal flow direction in bilateral ophthalmic arteries.`);
-                index++;
-            }
-
-            // 3. High Velocity (需合併雙側 + 附上PSV)
             if (document.getElementById('chk_tccs_vel').checked) {
                 let velItems = [];
                 document.querySelectorAll('.tccs-chk-grid_vel:checked').forEach(chk => {
-                    velItems.push({
-                        name: chk.value,
-                        psv: chk.closest('div').querySelector('.tccs-psv-grid_vel').value
-                    });
+                    velItems.push({ name: chk.value, psv: chk.closest('div').querySelector('.tccs-psv-grid_vel').value });
                 });
 
                 if (velItems.length > 0) {
-                    let bilateralBases = [];
-                    let rightBases = [];
-                    let leftBases = [];
-                    let otherBases = [];
+                    let bilateralBases = []; let rightBases = []; let leftBases = []; let otherBases = [];
                     let processed = new Set();
 
                     tccsBaseVessels.forEach(base => {
                         let rItem = velItems.find(x => x.name === "right " + base);
                         let lItem = velItems.find(x => x.name === "left " + base);
                         if (rItem && lItem) {
-                            let psvStr = "";
-                            if (rItem.psv || lItem.psv) {
-                                psvStr = ` (R/L PSV= ${rItem.psv || '___'}/${lItem.psv || '___'} cm/sec)`;
-                            }
+                            let psvStr = (rItem.psv || lItem.psv) ? ` (R/L PSV= ${rItem.psv || '___'}/${lItem.psv || '___'} cm/sec)` : "";
                             bilateralBases.push(base + "s" + psvStr);
-                            processed.add(rItem.name);
-                            processed.add(lItem.name);
+                            processed.add(rItem.name); processed.add(lItem.name);
                         }
                     });
 
@@ -412,44 +609,33 @@
                 }
             }
 
-            // 4. Resistance
             if (document.getElementById('chk_tccs_res').checked) {
                 const resList = Array.from(document.querySelectorAll('.tccs-chk-grid_res:checked')).map(c => c.value);
-                if (resList.length > 0) {
-                    tccsLines.push(`${index}. Increased flow resistances in ${formatBilateralVessels(resList, true)}, indicating stenosis.`);
-                    index++;
-                }
+                if (resList.length > 0) { tccsLines.push(`${index}. Increased flow resistances in ${formatBilateralVessels(resList, true)}, indicating stenosis.`); index++; }
             }
 
-            // 5. Reduced Velocity
             if (document.getElementById('chk_tccs_red').checked) {
                 if (document.getElementById('chk_tccs_red_gen').checked) {
-                    tccsLines.push(`${index}. Reduced mean flow velocities in most of the sampled arteries, probably indicating multifocal intracranial arterial stenosis.`);
-                    index++;
+                    tccsLines.push(`${index}. Reduced mean flow velocities in most of the sampled arteries, probably indicating multifocal intracranial arterial stenosis.`); index++;
                 } else {
                     const redList = Array.from(document.querySelectorAll('.tccs-chk-grid_red:checked')).map(c => c.value);
-                    if (redList.length > 0) {
-                        tccsLines.push(`${index}. Reduced mean flow velocity in ${formatBilateralVessels(redList, true)}, indicating stenosis.`);
-                        index++;
-                    }
+                    if (redList.length > 0) { tccsLines.push(`${index}. Reduced mean flow velocity in ${formatBilateralVessels(redList, true)}, indicating stenosis.`); index++; }
                 }
             }
 
-            // 6. Not Visualized
             if (document.getElementById('chk_tccs_not').checked) {
                 const notList = Array.from(document.querySelectorAll('.tccs-chk-grid_not:checked')).map(c => c.value);
                 if (notList.length > 0) {
                     let vStr = formatBilateralVessels(notList, true);
-                    vStr = vStr.charAt(0).toUpperCase() + vStr.slice(1);
-                    tccsLines.push(`${index}. ${vStr} were not visualized.`);
-                    index++;
+                    tccsLines.push(`${index}. ${vStr.charAt(0).toUpperCase() + vStr.slice(1)} were not visualized.`); index++;
                 }
             }
-
-            if (tccsLines.length > 0) {
-                finalStr += `Transcranial color-coded sonography (TCCS):\n`;
-                finalStr += tccsLines.join("\n");
+            
+            if (document.getElementById('chk_tccs_oa').checked) {
+                tccsLines.push(`${index}. Normal flow direction in bilateral ophthalmic arteries.`); index++;
             }
+
+            if (tccsLines.length > 0) { finalStr += `Transcranial color-coded sonography (TCCS):\n` + tccsLines.join("\n"); }
 
             reportBox.value = finalStr.trim();
         }
@@ -459,19 +645,14 @@
             const loc = document.querySelector('input[name="loc"]:checked').value;
             const vaUnit = (loc === '生醫') ? 'cm' : 'mm';
             const mainType = document.querySelector('input[name="mainType"]:checked').value;
-            
             const isOA = document.querySelector('input[value="OA"]').checked;
             const isSTA = document.getElementById('check_sta').checked;
             const isRes = document.getElementById('check_res').checked;
             const isStent = document.getElementById('check_stent').checked;
             const isSteal = document.getElementById('check_steal').checked;
-
-            const imtR = document.getElementById('imt_r').value || "0.00";
-            const imtL = document.getElementById('imt_l').value || "0.00";
-            const vaR = document.getElementById('va_r').value || "0.00";
-            const vaL = document.getElementById('va_l').value || "0.00";
-            const vafR = parseFloat(document.getElementById('vaf_r').value) || 0;
-            const vafL = parseFloat(document.getElementById('vaf_l').value) || 0;
+            const imtR = document.getElementById('imt_r').value || "0.00"; const imtL = document.getElementById('imt_l').value || "0.00";
+            const vaR = document.getElementById('va_r').value || "0.00"; const vaL = document.getElementById('va_l').value || "0.00";
+            const vafR = parseFloat(document.getElementById('vaf_r').value) || 0; const vafL = parseFloat(document.getElementById('vaf_l').value) || 0;
             const totalFlow = (vafR + vafL).toFixed(1);
 
             let resText = "Normal PSV and EDV in bilateral CCAs, ICAs and ECAs.";
@@ -489,8 +670,7 @@
             document.querySelectorAll('.v-sel').forEach(sel => {
                 const vName = sel.dataset.v;
                 if (sel.value === ">50%") {
-                    const psv = sel.parentElement.querySelector('.v-psv').value;
-                    const edv = sel.parentElement.querySelector('.v-edv').value;
+                    const psv = sel.parentElement.querySelector('.v-psv').value; const edv = sel.parentElement.querySelector('.v-edv').value;
                     if (psv && edv) severeVessels.push({ name: vName, psv, edv });
                     sel.parentElement.querySelector('.psv-edv-box').classList.remove('hidden');
                 } else {
@@ -505,14 +685,11 @@
             if (mainType === 'Abnormal' && plaqueVessels.length > 0) {
                 let vText = formatBilateralVessels(plaqueVessels.map(v => v.name));
                 reportText += `- Homogenous atherosclerotic changes with diameter reduction in ${vText}.\n`;
-                let severity = "mild";
-                const degs = plaqueVessels.map(v => v.degree);
+                let severity = "mild"; const degs = plaqueVessels.map(v => v.degree);
                 if (degs.some(d => d==='30-50%') && degs.some(d => d==='<10%' || d==='10-30%')) severity = "mild to moderate";
                 else if (degs.every(d => d==='30-50%')) severity = "moderate";
                 conclusions.push(`${severity.charAt(0).toUpperCase() + severity.slice(1)} atherosclerosis in ${vText}${hemoPhrase}.`);
-            } else if (mainType === 'Normal') {
-                conclusions.push(`The results of the carotid arteries were within normal limits${hemoPhrase}.`);
-            }
+            } else if (mainType === 'Normal') { conclusions.push(`The results of the carotid arteries were within normal limits${hemoPhrase}.`); }
 
             reportText += `- ${resText}\n\nVertebral artery:\n- VA Diameter (R/L): ${vaR}/${vaL} ${vaUnit}.\n`;
             if (mainType === 'Abnormal' && vafR < 40) reportText += `- Reduced flow amount in the right VA. (${vafR} < 40ml/min)\n`;
@@ -537,38 +714,25 @@
             }
 
             if (isOA) conclusions.push("Normal flow direction in bilateral ophthalmic arteries.");
-            
             if (isSTA) {
-                const staState = document.querySelector('input[name="sta_state"]:checked').value;
-                if (staState === 'normal') conclusions.push("The sampled bilateral STAs and OCAs were unremarkable.");
+                if (document.querySelector('input[name="sta_state"]:checked').value === 'normal') conclusions.push("The sampled bilateral STAs and OCAs were unremarkable.");
                 else {
                     const side = document.querySelector('input[name="sta_side"]:checked').value;
                     let checkedVessels = []; let riStrings = [];
-                    if (document.getElementById('sta_check_sta').checked) {
-                        checkedVessels.push("STA");
-                        riStrings.push(`STA RI [R/L]: ${document.getElementById('sta_ri_r').value || "-"}/${document.getElementById('sta_ri_l').value || "-"}`);
-                    }
-                    if (document.getElementById('sta_check_oca').checked) {
-                        checkedVessels.push("OCA");
-                        riStrings.push(`OCA RI [R/L]: ${document.getElementById('oca_ri_r').value || "-"}/${document.getElementById('oca_ri_l').value || "-"}`);
-                    }
-                    if (checkedVessels.length > 0) {
-                        conclusions.push(`Reduced flow resistance in the ${side} ${checkedVessels.join(" and ")} compared to the contralateral side. (${riStrings.join("; ")}) ${side.charAt(0).toUpperCase() + side.slice(1)} dural AV fistula could not be ruled out. Suggest brain CTA for survey.`);
-                    }
+                    if (document.getElementById('sta_check_sta').checked) { checkedVessels.push("STA"); riStrings.push(`STA RI [R/L]: ${document.getElementById('sta_ri_r').value || "-"}/${document.getElementById('sta_ri_l').value || "-"}`); }
+                    if (document.getElementById('sta_check_oca').checked) { checkedVessels.push("OCA"); riStrings.push(`OCA RI [R/L]: ${document.getElementById('oca_ri_r').value || "-"}/${document.getElementById('oca_ri_l').value || "-"}`); }
+                    if (checkedVessels.length > 0) conclusions.push(`Reduced flow resistance in the ${side} ${checkedVessels.join(" and ")} compared to the contralateral side. (${riStrings.join("; ")}) ${side.charAt(0).toUpperCase() + side.slice(1)} dural AV fistula could not be ruled out. Suggest brain CTA for survey.`);
                 }
             }
 
             if (isStent) {
-                let sSide = document.querySelector('input[name="stent_side"]:checked').value;
-                let sPsv = parseFloat(document.getElementById('stent_psv').value) || 0; let sEdv = document.getElementById('stent_edv').value || "0";
+                let sSide = document.querySelector('input[name="stent_side"]:checked').value; let sPsv = parseFloat(document.getElementById('stent_psv').value) || 0; let sEdv = document.getElementById('stent_edv').value || "0";
                 if (sPsv < 175) conclusions.push(`Stent was set from the ${sSide} ICA to CCA with normal in-stent flow velocity. (PSV/EDV=${sPsv}/${sEdv} cm/s)`);
                 else conclusions.push(`Stent was set from the ${sSide} ICA to CCA with increased in-stent flow velocity (PSV/EDV=${sPsv}/${sEdv} cm/s), indicating in-stent re-stenosis.`);
             }
 
             if (isSteal) {
-                let side = document.querySelector('input[name="steal_side"]:checked').value;
-                let stage = document.querySelector('input[name="steal_stage"]:checked').value;
-                let wave = document.querySelector('input[name="steal_wave"]:checked').value;
+                let side = document.querySelector('input[name="steal_side"]:checked').value; let stage = document.querySelector('input[name="steal_stage"]:checked').value; let wave = document.querySelector('input[name="steal_wave"]:checked').value;
                 if (stage === 'early') conclusions.push(`Bunny waveform in the ${side} VA with ${wave} waveform in the ${side} subclavian artery, indicating early stage of subclavian steal phenomenon due to stenosis in the ${side} proximal subclavian artery.`);
                 else conclusions.push(`Biphasic waveform/reversed flow direction in the ${side} VA with ${wave} waveform in the ${side} subclavian artery, indicating late stage of ${side} subclavian steal phenomenon due to stenosis in the ${side} proximal subclavian artery.`);
             }
@@ -582,14 +746,11 @@
             if(raw.includes("[系統提示]")) { alert("目前頁籤尚無正式報告可複製！"); return; }
             const clean = raw.replace(/^\[.*?\]:\s*/gm, ""); 
             const temp = document.createElement('textarea');
-            temp.value = clean.trim();
-            document.body.appendChild(temp); temp.select(); document.execCommand('copy'); document.body.removeChild(temp);
+            temp.value = clean.trim(); document.body.appendChild(temp); temp.select(); document.execCommand('copy'); document.body.removeChild(temp);
             alert("報告複製成功！(識別標籤已自動隱藏)");
         }
-        
         function toggleSTAState() {
-            const state = document.querySelector('input[name="sta_state"]:checked').value;
-            document.getElementById('staAbnormalArea').classList.toggle('hidden', state === 'normal');
+            document.getElementById('staAbnormalArea').classList.toggle('hidden', document.querySelector('input[name="sta_state"]:checked').value === 'normal');
             updateReport();
         }
         
