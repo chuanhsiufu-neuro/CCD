@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>神經科檢查報告系統 v5.3 (Midline/TCCS 精修版 v2)</title>
+    <title>神經科檢查報告系統 v5.4 (TCCS Generalized 擴充版)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .report-textarea { font-family: 'Courier New', Courier, monospace; min-height: 650px; white-space: pre-wrap; }
@@ -17,7 +17,7 @@
 <body class="bg-gray-100 flex flex-col h-screen overflow-hidden">
 
     <header class="bg-slate-800 text-white p-4 shadow-md flex justify-between items-center z-20">
-        <h1 class="text-xl font-bold tracking-wide">Neuro-Reporting System v5.3</h1>
+        <h1 class="text-xl font-bold tracking-wide">Neuro-Reporting System v5.4</h1>
         <button onclick="copyCleanReport()" class="bg-green-600 hover:bg-green-500 text-white px-6 py-2 rounded shadow transition font-bold">複製報告 (自動過濾標籤)</button>
     </header>
 
@@ -143,7 +143,8 @@
                         <div class="pt-1">
                             <label class="flex items-center gap-1 font-bold text-blue-600"><input type="checkbox" id="chk_tccs_red" onchange="toggleModule('tccs_red_area', 'chk_tccs_red')"> Reduced mean flow velocity</label>
                             <div id="tccs_red_area" class="hidden sub-input-box border-blue-400 text-xs">
-                                <div id="grid_red" class="tccs-grid"></div>
+                                <div id="grid_red" class="tccs-grid mb-2"></div>
+                                <label class="col-span-2 border-t border-blue-200 pt-2 font-bold text-blue-700 flex items-center gap-1"><input type="checkbox" id="chk_tccs_red_gen" onchange="updateReport()"> Generalized (套用全身性結論)</label>
                             </div>
                         </div>
 
@@ -167,7 +168,7 @@
                             </div>
                         </div>
 
-                        <!-- OA (新增) -->
+                        <!-- OA -->
                         <div class="pt-1 border-t mt-2">
                             <label class="flex items-center gap-1 font-bold text-green-700"><input type="checkbox" id="chk_tccs_oa" onchange="updateReport()"> Ophthalmic Artery (OA)</label>
                         </div>
@@ -300,7 +301,6 @@
 
             let shiftStr = "___, ___ to ___";
             if (!isNaN(a) && !isNaN(b)) {
-                // 修改：Shift = (大減小) / 2
                 let shiftVal = (Math.abs(a - b) / 2).toFixed(2);
                 if (a > b) shiftStr = `${shiftVal} cm, left to right`;
                 else if (b > a) shiftStr = `${shiftVal} cm, right to left`;
@@ -351,10 +351,15 @@
             }
 
             if (document.getElementById('chk_tccs_red').checked) {
-                const redList = Array.from(document.querySelectorAll('.tccs-chk-grid_red:checked')).map(c => c.value);
-                if (redList.length > 0) {
-                    tccsLines.push(`${index}. Reduced mean flow velocity in ${formatBilateralVessels(redList, true)}, indicating stenosis.`);
+                if (document.getElementById('chk_tccs_red_gen').checked) {
+                    tccsLines.push(`${index}. Reduced mean flow velocities in most of the sampled arteries, probably indicating multifocal intracranial arterial stenosis.`);
                     index++;
+                } else {
+                    const redList = Array.from(document.querySelectorAll('.tccs-chk-grid_red:checked')).map(c => c.value);
+                    if (redList.length > 0) {
+                        tccsLines.push(`${index}. Reduced mean flow velocity in ${formatBilateralVessels(redList, true)}, indicating stenosis.`);
+                        index++;
+                    }
                 }
             }
 
@@ -375,7 +380,6 @@
                 index++;
             }
 
-            // 新增 OA 的結論
             if (document.getElementById('chk_tccs_oa').checked) {
                 tccsLines.push(`${index}. Normal flow direction in bilateral ophthalmic arteries.`);
                 index++;
