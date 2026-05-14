@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>神經科檢查報告系統 v4.0</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .report-textarea { font-family: 'Courier New', Courier, monospace; min-height: 650px; white-space: pre-wrap; }
+        .input-card { @apply p-4 rounded-lg mb-4 border bg-white shadow-sm; }
+        .sub-input-box { @apply mt-2 p-3 bg-slate-50 border-l-4 border-indigo-400 rounded text-sm grid gap-2; }
+        .vessel-row { display: grid; grid-template-columns: 120px 1fr 140px; gap: 8px; align-items: center; margin-bottom: 4px; }
+        .res-vessel-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; padding: 10px; background: #f8fafc; border-radius: 6px; margin-top: 6px; border: 1px solid #e2e8f0; }
+    </style>
+</head>
+<body class="bg-gray-100 flex flex-col h-screen">
+
+    <header class="bg-slate-800 text-white p-4 shadow-md flex justify-between items-center">
+        <h1 class="text-xl font-bold tracking-wide">Neuro-Reporting System v4.0</h1>
+        <button onclick="copyCleanReport()" class="bg-green-600 hover:bg-green-500 text-white px-6 py-2 rounded shadow transition font-bold">複製報告 (自動過濾標籤)</button>
+    </header>
+
+    <main class="flex flex-1 overflow-hidden">
+        <!-- 左側選單 (1/3) -->
+        <aside class="w-1/3 bg-gray-50 border-r p-5 overflow-y-auto">
+            
+            <!-- 基本設定 -->
+            <div class="input-card border-t-4 border-t-green-500">
+                <div class="flex justify-between mb-2">
+                    <label class="font-bold text-gray-800">1. 檢查地點</label>
+                    <div class="flex gap-4 text-sm font-bold text-green-700">
+                        <label><input type="radio" name="loc" value="生醫" checked onchange="updateReport()"> 生醫 (cm)</label>
+                        <label><input type="radio" name="loc" value="新竹" onchange="updateReport()"> 新竹 (mm)</label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 報告屬性區塊 -->
+            <div class="input-card border-t-4 border-t-blue-500">
+                <label class="block font-bold text-gray-800 mb-2">2. 報告屬性 & 擴充模組</label>
+                <div class="space-y-2 text-sm text-gray-700 font-medium">
+                    <div class="grid grid-cols-2 gap-3 pb-2 border-b">
+                        <label class="flex items-center gap-1"><input type="radio" name="mainType" value="Normal" onchange="updateReport()" checked> Normal</label>
+                        <label class="flex items-center gap-1"><input type="radio" name="mainType" value="Abnormal" onchange="updateReport()"> Abnormal</label>
+                        <label class="flex items-center gap-1"><input type="checkbox" class="type-check" value="OA" onchange="updateReport()"> OA</label>
+                        <label class="flex items-center gap-1"><input type="checkbox" class="type-check" value="STA" onchange="updateReport()"> STA/OCA</label>
+                    </div>
+                    
+                    <!-- Resistance 模組 -->
+                    <div class="pt-1">
+                        <label class="flex items-center gap-1 font-bold text-red-600"><input type="checkbox" id="check_res" onchange="toggleModule('resVesselArea', 'check_res')"> Increased Resistance</label>
+                        <div id="resVesselArea" class="hidden res-vessel-grid text-xs text-gray-700">
+                            <label><input type="checkbox" class="res-check" value="right CCA" onchange="updateReport()"> R-CCA</label>
+                            <label><input type="checkbox" class="res-check" value="left CCA" onchange="updateReport()"> L-CCA</label>
+                            <label><input type="checkbox" class="res-check" value="right ICA" onchange="updateReport()"> R-ICA</label>
+                            <label><input type="checkbox" class="res-check" value="left ICA" onchange="updateReport()"> L-ICA</label>
+                            <label><input type="checkbox" class="res-check" value="right ECA" onchange="updateReport()"> R-ECA</label>
+                            <label><input type="checkbox" class="res-check" value="left ECA" onchange="updateReport()"> L-ECA</label>
+                            <label class="col-span-2 border-t pt-2 mt-1 text-blue-600 font-bold"><input type="checkbox" id="res_gen" onchange="updateReport()"> Generalized (全身性)</label>
+                        </div>
+                    </div>
+
+                    <!-- Stent 模組 -->
+                    <div class="pt-1">
+                        <label class="flex items-center gap-1 font-bold text-indigo-600"><input type="checkbox" id="check_stent" onchange="toggleModule('stentArea', 'check_stent')"> Stent</label>
+                        <div id="stentArea" class="hidden sub-input-box">
+                            <div class="flex gap-4">
+                                <label><input type="radio" name="stent_side" value="right" checked onchange="updateReport()"> Right</label>
+                                <label><input type="radio" name="stent_side" value="left" onchange="updateReport()"> Left</label>
+                            </div>
+                            <div class="flex gap-2 items-center">
+                                <input type="number" id="stent_psv" placeholder="In-stent PSV" class="w-24 border p-1 rounded" oninput="updateReport()">
+                                <input type="number" id="stent_edv" placeholder="In-stent EDV" class="w-24 border p-1 rounded" oninput="updateReport()">
+                                <span class="text-xs text-gray-500">cm/s</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Steal 模組 -->
+                    <div class="pt-1">
+                        <label class="flex items-center gap-1 font-bold text-purple-600"><input type="checkbox" id="check_steal" onchange="toggleModule('stealArea', 'check_steal')"> Subclavian Steal</label>
+                        <div id="stealArea" class="hidden sub-input-box">
+                            <div class="grid grid-cols-2 gap-2">
+                                <div class="space-y-1">
+                                    <span class="text-xs font-bold text-gray-500">Side</span><br>
+                                    <label><input type="radio" name="steal_side" value="right" checked onchange="updateReport()"> R</label>
+                                    <label class="ml-2"><input type="radio" name="steal_side" value="left" onchange="updateReport()"> L</label>
+                                </div>
+                                <div class="space-y-1">
+                                    <span class="text-xs font-bold text-gray-500">Stage</span><br>
+                                    <label><input type="radio" name="steal_stage" value="early" checked onchange="updateReport()"> Early</label>
+                                    <label class="ml-2"><input type="radio" name="steal_stage" value="late" onchange="updateReport()"> Late</label>
+                                </div>
+                            </div>
+                            <div class="mt-1">
+                                <span class="text-xs font-bold text-gray-500">Subclavian Waveform</span><br>
+                                <label><input type="radio" name="steal_wave" value="biphasic" checked onchange="updateReport()"> Biphasic</label>
+                                <label class="ml-2"><input type="radio" name="steal_wave" value="monophasic" onchange="updateReport()"> Monophasic</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 數值輸入 -->
+            <div class="input-card border-t-4 border-t-orange-400">
+                <label class="block font-bold text-gray-800 mb-2 border-b pb-1">3. Basic Parameters</label>
+                <div class="grid grid-cols-2 gap-3 text-xs">
+                    <div><span class="text-gray-500">IMT R</span><input type="number" id="imt_r" step="0.01" class="w-full border p-1 rounded mt-1" oninput="updateReport()"></div>
+                    <div><span class="text-gray-500">IMT L</span><input type="number" id="imt_l" step="0.01" class="w-full border p-1 rounded mt-1" oninput="updateReport()"></div>
+                    <div><span class="text-gray-500">VA R (Dia)</span><input type="number" id="va_r" step="0.01" class="w-full border p-1 rounded mt-1" oninput="updateReport()"></div>
+                    <div><span class="text-gray-500">VA L (Dia)</span><input type="number" id="va_l" step="0.01" class="w-full border p-1 rounded mt-1" oninput="updateReport()"></div>
+                    <div><span class="text-gray-500">R VA flow</span><input type="number" id="vaf_r" class="w-full border p-1 rounded mt-1" oninput="updateReport()"></div>
+                    <div><span class="text-gray-500">L VA flow</span><input type="number" id="vaf_l" class="w-full border p-1 rounded mt-1" oninput="updateReport()"></div>
+                </div>
+            </div>
+
+            <!-- Plaque 選單 -->
+            <div class="input-card border-t-4 border-t-red-400">
+                <label class="block font-bold text-gray-800 mb-2 border-b pb-1">4. Plaque & Stenosis</label>
+                <div id="vesselList" class="space-y-1"></div>
+            </div>
+        </aside>
+
+        <!-- 右側報告預覽 (2/3) -->
+        <section class="w-2/3 p-6 bg-slate-200 flex flex-col">
+            <textarea id="reportBox" class="report-textarea w-full flex-1 p-6 border-0 rounded-xl shadow-lg text-sm leading-relaxed text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-300" readonly placeholder="報告即時生成中..."></textarea>
+        </section>
+    </main>
+
+    <script>
+        // 1. 初始化血管選項
+        const vessels = ["right CCA", "right carotid bulb", "right ICA", "right ECA", "left CCA", "left carotid bulb", "left ICA", "left ECA"];
+        const vList = document.getElementById('vesselList');
+        vessels.forEach(v => {
+            const div = document.createElement('div');
+            div.className = "vessel-row text-xs";
+            div.innerHTML = `<span>${v}</span><select class="v-sel border p-1 rounded bg-gray-50" data-v="${v}" onchange="updateReport()"><option value="Normal">Normal</option><option value="<10%">&lt;10%</option><option value="10-30%">10-30%</option><option value="30-50%">30-50%</option><option value=">50%">>50%</option></select><div class="psv-edv-box hidden flex gap-1"><input type="number" placeholder="PSV" class="v-psv w-14 border p-1 rounded" oninput="updateReport()"><input type="number" placeholder="EDV" class="v-edv w-14 border p-1 rounded" oninput="updateReport()"></div>`;
+            vList.appendChild(div);
+        });
+
+        // 2. 控制模組展開/收起
+        function toggleModule(areaId, checkId) {
+            document.getElementById(areaId).classList.toggle('hidden', !document.getElementById(checkId).checked);
+            updateReport();
+        }
+
+        // 3. 雙側血管名稱合併器
+        function formatVesselNames(names) {
+            if (names.length === 0) return "___";
+            const pairs = [["CCA", "right CCA", "left CCA"], ["carotid bulb", "right carotid bulb", "left carotid bulb"], ["ICA", "right ICA", "left ICA"], ["ECA", "right ECA", "left ECA"]];
+            let result = []; let seen = new Set();
+            pairs.forEach(p => { if (names.includes(p[1]) && names.includes(p[2])) { result.push(`bilateral ${p[0]}s`); seen.add(p[1]); seen.add(p[2]); } });
+            names.forEach(n => { if (!seen.has(n)) result.push(n); });
+            if (result.length > 1) { const last = result.pop(); return result.join(", ") + " and " + last; }
+            return result[0];
+        }
+
+        // 4. 主力報告生成邏輯
+        function updateReport() {
+            // 讀取環境變數
+            const loc = document.querySelector('input[name="loc"]:checked').value;
+            const vaUnit = (loc === '生醫') ? 'cm' : 'mm';
+            const mainType = document.querySelector('input[name="mainType"]:checked').value;
+            
+            // 讀取擴充屬性
+            const isOA = document.querySelector('input[value="OA"]').checked;
+            const isSTA = document.querySelector('input[value="STA"]').checked;
+            const isRes = document.getElementById('check_res').checked;
+            const isStent = document.getElementById('check_stent').checked;
+            const isSteal = document.getElementById('check_steal').checked;
+
+            // 讀取數值
+            const imtR = document.getElementById('imt_r').value || "0.00";
+            const imtL = document.getElementById('imt_l').value || "0.00";
+            const vaR = document.getElementById('va_r').value || "0.00";
+            const vaL = document.getElementById('va_l').value || "0.00";
+            const vafR = parseFloat(document.getElementById('vaf_r').value) || 0;
+            const vafL = parseFloat(document.getElementById('vaf_l').value) || 0;
+            const totalFlow = (vafR + vafL).toFixed(1);
+
+            // 處理 Resistance 字串
+            let resText = "Normal PSV and EDV in bilateral CCAs, ICAs and ECAs.";
+            let hemoPhrase = " without significant hemodynamic changes";
+            if (isRes) {
+                hemoPhrase = ""; // 只要有 Resistance 就移除 hemodynamic
+                if (document.getElementById('res_gen').checked) {
+                    resText = "Generalized increased flow resistance.";
+                } else {
+                    const resVessels = Array.from(document.querySelectorAll('.res-check:checked')).map(c => c.value);
+                    resText = resVessels.length > 0 ? `Increased flow resistance in ${formatVesselNames(resVessels)}.` : "Increased flow resistance.";
+                }
+            }
+
+            // 處理 Plaque 血管
+            let plaqueVessels = []; let severeVessels = [];
+            document.querySelectorAll('.v-sel').forEach(sel => {
+                const vName = sel.dataset.v;
+                if (sel.value === ">50%") {
+                    const psv = sel.parentElement.querySelector('.v-psv').value;
+                    const edv = sel.parentElement.querySelector('.v-edv').value;
+                    if (psv && edv) severeVessels.push({ name: vName, psv, edv });
+                    sel.parentElement.querySelector('.psv-edv-box').classList.remove('hidden');
+                } else {
+                    if (sel.value !== "Normal") plaqueVessels.push({ name: vName, degree: sel.value });
+                    sel.parentElement.querySelector('.psv-edv-box').classList.add('hidden');
+                }
+            });
+
+            // 陣列化結論收集
+            let conclusions = [];
+
+            // --- 建立主體 Body ---
+            let reportText = `[頸動脈超音波][${mainType}][${loc}]:\n`;
+            reportText += `Carotid artery:\n`;
+            reportText += `- CCA intima-media thickness (R/L): ${imtR}/${imtL} mm.\n`;
+            
+            if (mainType === 'Abnormal' && plaqueVessels.length > 0) {
+                let vText = formatVesselNames(plaqueVessels.map(v => v.name));
+                reportText += `- Homogenous atherosclerotic changes with diameter reduction in ${vText}.\n`;
+                
+                // 判斷嚴重度推入結論
+                let severity = "mild";
+                const degs = plaqueVessels.map(v => v.degree);
+                if (degs.some(d => d==='30-50%') && degs.some(d => d==='<10%' || d==='10-30%')) severity = "mild to moderate";
+                else if (degs.every(d => d==='30-50%')) severity = "moderate";
+                conclusions.push(`${severity.charAt(0).toUpperCase() + severity.slice(1)} atherosclerosis in ${vText}${hemoPhrase}.`);
+            } else if (mainType === 'Normal') {
+                conclusions.push(`The results of the carotid duplex were within normal limits${hemoPhrase}.`);
+            }
+
+            reportText += `- ${resText}\n\n`;
+
+            // --- VA Body ---
+            reportText += `Vertebral artery:\n`;
+            reportText += `- VA Diameter (R/L): ${vaR}/${vaL} ${vaUnit}.\n`;
+            if (mainType === 'Abnormal' && vafR < 40) reportText += `- Reduced flow amount in the right VA. (${vafR} < 40ml/min)\n`;
+            if (mainType === 'Abnormal' && vafL < 40) reportText += `- Reduced flow amount in the left VA. (${vafL} < 40ml/min)\n`;
+            reportText += `- Total VA flow amount. (R+L= ${totalFlow}${totalFlow >= 100 ? '>100' : '<100'} ml/min)\n\n`;
+
+            // --- VA Conclusion ---
+            if (vafR >= 40 && vafL >= 40 && totalFlow >= 100) {
+                conclusions.push("Adequate total VA flow amount.");
+            } else {
+                let side = (vafR < 40 && vafL < 40) ? "Bilateral" : (vafR < 40 ? "Right" : "Left");
+                conclusions.push(`${side} VA stenosis with ${totalFlow >= 100 ? 'adequate' : 'insufficient'} total VA flow amount.`);
+            }
+
+            // --- 擴充結論 ---
+            
+            // 1. Severe ICA / CCA / ECA
+            if (mainType === 'Abnormal') {
+                severeVessels.forEach(sv => {
+                    if (sv.name.includes("ICA")) {
+                        let pct = ">50%"; const p = parseFloat(sv.psv); const e = parseFloat(sv.edv);
+                        if (p > 250 && e > 145) pct = "80-95%"; else if (p > 250 && e > 100) pct = "70-80%"; else if (p > 200) pct = "60-70%"; else if (p > 120) pct = "50-60%";
+                        let sSide = sv.name.includes("right") ? "right" : "left";
+                        conclusions.push(`Severe stenosis (${pct}) with high flow velocity (ICA PSV/EDV=${sv.psv}/${sv.edv} cm/s) in the ${sSide} ICA; normal flow direction in the ${sSide} ophthalmic artery.`);
+                    } else {
+                        conclusions.push(`Severe stenosis (>50%) in the ${sv.name} with high flow velocity (PSV/EDV=${sv.psv}/${sv.edv} cm/s).`);
+                    }
+                });
+            }
+
+            // 2. OA & STA
+            if (isOA) conclusions.push("Normal flow direction in bilateral ophthalmic arteries.");
+            if (isSTA) conclusions.push("The sampled bilateral STAs and OCAs were unremarkable.");
+
+            // 3. Stent
+            if (isStent) {
+                let sSide = document.querySelector('input[name="stent_side"]:checked').value;
+                let sPsv = parseFloat(document.getElementById('stent_psv').value) || 0;
+                let sEdv = document.getElementById('stent_edv').value || "0";
+                if (sPsv < 175) {
+                    conclusions.push(`Stent was set from the ${sSide} ICA to CCA with normal in-stent flow velocity. (PSV/EDV=${sPsv}/${sEdv} cm/s)`);
+                } else {
+                    conclusions.push(`Stent was set from the ${sSide} ICA to CCA with increased in-stent flow velocity (PSV/EDV=${sPsv}/${sEdv} cm/s), indicating in-stent re-stenosis.`);
+                }
+            }
+
+            // 4. Steal
+            if (isSteal) {
+                let side = document.querySelector('input[name="steal_side"]:checked').value;
+                let stage = document.querySelector('input[name="steal_stage"]:checked').value;
+                let wave = document.querySelector('input[name="steal_wave"]:checked').value;
+                
+                if (stage === 'early') {
+                    conclusions.push(`Bunny waveform in the ${side} VA with ${wave} waveform in the ${side} subclavian artery, indicating early stage of subclavian steal phenomenon due to stenosis in the ${side} proximal subclavian artery.`);
+                } else {
+                    conclusions.push(`Biphasic waveform/reversed flow direction in the ${side} VA with ${wave} waveform in the ${side} subclavian artery, indicating late stage of ${side} subclavian steal phenomenon due to stenosis in the ${side} proximal subclavian artery.`);
+                }
+            }
+
+            // --- 組裝最後輸出 ---
+            reportText += `Conclusion:\n`;
+            reportText += conclusions.map((c, i) => `${i+1}. ${c}`).join("\n");
+
+            document.getElementById('reportBox').value = reportText.trim();
+        }
+
+        // 5. 複製功能 (自動過濾掉首行的 [XXX] 標籤)
+        function copyCleanReport() {
+            const raw = document.getElementById('reportBox').value;
+            const clean = raw.replace(/^\[.*?\]:\s*/gm, ""); // 移除開頭標籤
+            const temp = document.createElement('textarea');
+            temp.value = clean.trim();
+            document.body.appendChild(temp);
+            temp.select();
+            document.execCommand('copy');
+            document.body.removeChild(temp);
+            alert("報告複製成功！(識別標籤已自動隱藏)");
+        }
+        
+        // 初始載入
+        updateReport();
+    </script>
+</body>
+</html>
