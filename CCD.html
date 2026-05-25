@@ -2,24 +2,25 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>神經科檢查報告系統 v9.4 (穩定修復與 SSEP 整合版)</title>
+    <title>神經科檢查報告系統 v11 </title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .report-textarea { font-family: 'Courier New', Courier, monospace; min-height: 650px; white-space: pre-wrap; }
-        .input-card { @apply p-4 rounded-lg mb-4 border bg-white shadow-sm; }
-        .sub-input-box { @apply mt-2 p-3 bg-slate-50 border-l-4 rounded text-sm grid gap-2; }
+        .input-card { padding: 1rem; margin-bottom: 1rem; border: 1px solid #e2e8f0; border-radius: 0.5rem; background-color: white; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); }
+        .sub-input-box { margin-top: 0.5rem; padding: 0.75rem; background-color: #f8fafc; border-left-width: 4px; border-radius: 0.25rem; font-size: 0.875rem; display: grid; gap: 0.5rem; }
         .tccs-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; padding: 10px; background: #f8fafc; border-radius: 6px; border: 1px solid #e2e8f0; }
         .no-scrollbar::-webkit-scrollbar { display: none; }
         .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        .ncv-finding-card { @apply bg-white p-3 rounded shadow-sm border border-gray-200 mb-3; }
-        .ncv-nerve-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 8px; }
-        .ncv-nerve-item { @apply bg-slate-50 p-2 rounded border border-slate-200 flex flex-col items-center justify-center; }
+        .ncv-finding-card { background-color: white; padding: 0.75rem; border-radius: 0.25rem; box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); border: 1px solid #e5e7eb; margin-bottom: 0.75rem; }
+        .ncv-nerve-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; margin-top: 0.5rem; }
+        .ncv-nerve-item { background-color: #f8fafc; padding: 0.5rem; border-radius: 0.25rem; border: 1px solid #e2e8f0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .form-section { display: none; }
     </style>
 </head>
 <body class="bg-gray-100 flex flex-col h-screen overflow-hidden text-gray-800">
 
     <header class="bg-slate-800 text-white p-4 shadow-md flex justify-between items-center z-20">
-        <h1 class="text-xl font-bold tracking-wide">Neuro-Reporting System v9.4</h1>
+        <h1 class="text-xl font-bold tracking-wide">Neuro-Reporting System v10.5</h1>
         <button onclick="copyCleanReport()" class="bg-green-600 hover:bg-green-500 text-white px-6 py-2 rounded shadow transition font-bold">複製報告 (自動過濾標籤)</button>
     </header>
 
@@ -30,7 +31,6 @@
         <button class="tab-btn px-6 py-3 hover:bg-slate-200 border-t-4 border-transparent transition-colors" data-tab="ENoG_Blink" onclick="openTab('ENoG_Blink')">ENoG/Blink</button>
         <button class="tab-btn px-6 py-3 hover:bg-slate-200 border-t-4 border-transparent transition-colors" data-tab="RST" onclick="openTab('RST')">RST</button>
         <button class="tab-btn px-6 py-3 hover:bg-slate-200 border-t-4 border-transparent transition-colors" data-tab="SSR_RRIV" onclick="openTab('SSR_RRIV')">SSR/RRIV</button>
-        <!-- 合併後的 SSEP 頁籤 -->
         <button class="tab-btn px-6 py-3 hover:bg-slate-200 border-t-4 border-transparent transition-colors" data-tab="SSEP" onclick="openTab('SSEP')">SSEP</button>
         <button class="tab-btn px-6 py-3 hover:bg-slate-200 border-t-4 border-transparent transition-colors" data-tab="BAEP" onclick="openTab('BAEP')">BAEP</button>
         <button class="tab-btn px-6 py-3 hover:bg-slate-200 border-t-4 border-transparent transition-colors" data-tab="VEP" onclick="openTab('VEP')">VEP</button>
@@ -124,9 +124,18 @@
                             <label class="flex items-center gap-1 font-bold text-purple-600"><input type="checkbox" id="check_steal" onchange="toggleModule('stealArea', 'check_steal')"> Subclavian Steal</label>
                             <div id="stealArea" class="hidden sub-input-box border-purple-400 text-xs">
                                 <div class="flex gap-2">
-                                    <select id="steal_side" class="border p-1" onchange="updateReport()"><option value="right">Right</option><option value="left">Left</option></select>
-                                    <select id="steal_stage" class="border p-1" onchange="updateReport()"><option value="early">Early</option><option value="late">Late</option></select>
-                                    <select id="steal_wave" class="border p-1" onchange="updateReport()"><option value="biphasic">Biphasic</option><option value="monophasic">Monophasic</option></select>
+                                    <select id="steal_side" class="border p-1" onchange="updateReport()">
+                                        <option value="right">Right</option>
+                                        <option value="left">Left</option>
+                                    </select>
+                                    <select id="steal_stage" class="border p-1" onchange="updateReport()">
+                                        <option value="early">Early</option>
+                                        <option value="late">Late</option>
+                                    </select>
+                                    <select id="steal_wave" class="border p-1" onchange="updateReport()">
+                                        <option value="biphasic">Biphasic</option>
+                                        <option value="monophasic">Monophasic</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>
@@ -152,7 +161,7 @@
             </div>
 
             <!-- 【Midline/TCCS 表單】 -->
-            <div id="form-TCD" class="form-section hidden">
+            <div id="form-TCD" class="form-section">
                 <div class="input-card border-t-4 border-t-teal-500">
                     <label class="block font-bold text-teal-800 mb-2 border-b pb-1 text-base">1. Midline Measurement</label>
                     <div class="space-y-3 text-sm">
@@ -184,21 +193,18 @@
                                 </div>
                             </div>
                         </div>
-
                         <div class="pt-1 border-t mt-2">
                             <label class="flex items-center gap-1 font-bold text-red-600"><input type="checkbox" id="chk_tccs_vel" onchange="toggleModule('tccs_vel_area', 'chk_tccs_vel')"> Increased flow velocity</label>
                             <div id="tccs_vel_area" class="hidden sub-input-box border-red-400 text-xs">
                                 <div id="grid_vel" class="tccs-grid"></div>
                             </div>
                         </div>
-
                         <div class="pt-1">
                             <label class="flex items-center gap-1 font-bold text-orange-600"><input type="checkbox" id="chk_tccs_res" onchange="toggleModule('tccs_res_area', 'chk_tccs_res')"> Increased flow resistance</label>
                             <div id="tccs_res_area" class="hidden sub-input-box border-orange-400 text-xs">
                                 <div id="grid_res" class="tccs-grid"></div>
                             </div>
                         </div>
-
                         <div class="pt-1">
                             <label class="flex items-center gap-1 font-bold text-blue-600"><input type="checkbox" id="chk_tccs_red" onchange="toggleModule('tccs_red_area', 'chk_tccs_red')"> Reduced mean flow velocity</label>
                             <div id="tccs_red_area" class="hidden sub-input-box border-blue-400 text-xs">
@@ -208,14 +214,12 @@
                                 </label>
                             </div>
                         </div>
-
                         <div class="pt-1">
                             <label class="flex items-center gap-1 font-bold text-gray-600"><input type="checkbox" id="chk_tccs_not" onchange="toggleModule('tccs_not_area', 'chk_tccs_not')"> Not visualized</label>
                             <div id="tccs_not_area" class="hidden sub-input-box border-gray-400 text-xs">
                                 <div id="grid_not" class="tccs-grid"></div>
                             </div>
                         </div>
-
                         <div class="pt-1 border-t mt-2">
                             <label class="flex items-center gap-1 font-bold text-green-700"><input type="checkbox" id="chk_tccs_oa" onchange="updateReport()"> Ophthalmic Artery (OA)</label>
                         </div>
@@ -224,7 +228,7 @@
             </div>
 
             <!-- 【NCV 表單】 -->
-            <div id="form-NCV" class="form-section hidden">
+            <div id="form-NCV" class="form-section">
                 <div class="input-card border-t-4 border-t-slate-700">
                     <label class="block font-bold text-slate-800 mb-2 border-b pb-1 text-base">0. NCV Study Status</label>
                     <div class="flex gap-4 p-2 bg-slate-100 rounded">
@@ -354,7 +358,7 @@
             </div>
 
             <!-- 【ENoG / Blink 表單】 -->
-            <div id="form-ENoG_Blink" class="form-section hidden">
+            <div id="form-ENoG_Blink" class="form-section">
                 <div class="input-card border-t-4 border-t-cyan-500">
                     <label class="block font-bold text-cyan-800 mb-2 border-b pb-1 text-base">1. Electroneuronography (ENoG)</label>
                     <div class="space-y-3 text-sm">
@@ -394,7 +398,7 @@
             </div>
 
             <!-- 【RST 表單】 -->
-            <div id="form-RST" class="form-section hidden">
+            <div id="form-RST" class="form-section">
                 <div class="input-card border-t-4 border-t-rose-500">
                     <label class="block font-bold text-rose-800 mb-2 border-b pb-1 text-base">Repetitive Stimulation Test (RST)</label>
                     <div class="flex gap-4 p-3 bg-slate-100 rounded text-sm">
@@ -405,7 +409,7 @@
             </div>
 
             <!-- 【SSR/RRIV 表單】 -->
-            <div id="form-SSR_RRIV" class="form-section hidden">
+            <div id="form-SSR_RRIV" class="form-section">
                 <div class="input-card border-t-4 border-t-amber-500">
                     <label class="block font-bold text-amber-800 mb-2 border-b pb-1 text-base">SSR / RRIV</label>
                     <div class="space-y-3 text-sm text-gray-700">
@@ -441,68 +445,78 @@
             </div>
 
             <!-- 【SSEP 整合表單】 -->
-            <div id="form-SSEP" class="form-section hidden">
+            <div id="form-SSEP" class="form-section">
                 
                 <div class="input-card border-t-4 border-t-indigo-500">
-                    <label class="block font-bold text-indigo-800 mb-2 border-b pb-1 text-base">1. Upper Limb SSEP (Median Nerve)</label>
+                    <label class="block font-bold text-indigo-800 mb-2 border-b pb-1 text-base">1. Upper Limb (Median Nerve)</label>
                     <div class="space-y-3 text-sm">
-                        <div class="p-2 border rounded bg-indigo-50 flex items-center justify-between">
+                        <div class="p-2 border rounded bg-indigo-50 flex flex-col gap-2">
                             <label class="font-bold text-indigo-700 flex items-center gap-2"><input type="checkbox" id="chk_ssep_ul_norm" checked onchange="updateReport()"> Normal Latencies</label>
-                            <select id="ssep_ul_norm_s" class="border p-1 rounded bg-white text-xs" onchange="updateReport()">
-                                <option value="either">Either</option><option value="left">Left</option><option value="right">Right</option>
-                            </select>
-                        </div>
-                        <div class="p-2 border rounded bg-red-50 space-y-2">
-                            <div class="font-bold text-red-700 text-xs border-b pb-1">Abnormal Findings:</div>
-                            <div class="flex justify-between items-center text-xs">
-                                <span>Prolonged latencies:</span>
-                                <div class="flex gap-2"><label><input type="checkbox" id="ssep_ul_pro_l" onchange="updateReport()"> L</label><label><input type="checkbox" id="ssep_ul_pro_r" onchange="updateReport()"> R</label></div>
+                            <div class="flex gap-4 text-xs ml-6">
+                                <label><input type="radio" name="ssep_ul_norm_s" value="left" onchange="updateReport()"> L</label>
+                                <label><input type="radio" name="ssep_ul_norm_s" value="right" onchange="updateReport()"> R</label>
+                                <label><input type="radio" name="ssep_ul_norm_s" value="either" checked onchange="updateReport()"> Either</label>
                             </div>
-                            <div class="flex justify-between items-center text-xs">
-                                <span>Attenuated NAPs/SEPs:</span>
-                                <div class="flex gap-2"><label><input type="checkbox" id="ssep_ul_att_l" onchange="updateReport()"> L</label><label><input type="checkbox" id="ssep_ul_att_r" onchange="updateReport()"> R</label></div>
+                        </div>
+
+                        <div class="p-2 border rounded bg-red-50 space-y-2">
+                            <label class="font-bold text-red-700 flex items-center gap-2 border-b pb-1"><input type="checkbox" id="chk_ssep_ul_abn" onchange="toggleModule('ssep_ul_abn_opts', 'chk_ssep_ul_abn'); checkSSEPAbnormal();"> Abnormal Findings</label>
+                            <div id="ssep_ul_abn_opts" class="hidden space-y-2">
+                                <div class="flex justify-between items-center text-xs">
+                                    <span class="font-semibold text-gray-700"><input type="checkbox" id="chk_ssep_ul_pro" onchange="updateReport()"> Prolonged latencies:</span>
+                                    <select id="ssep_ul_pro_s" class="border rounded p-0.5" onchange="updateReport()"><option value="left">Left</option><option value="right">Right</option><option value="either" selected>Either</option></select>
+                                </div>
+                                <div class="flex justify-between items-center text-xs">
+                                    <span class="font-semibold text-gray-700"><input type="checkbox" id="chk_ssep_ul_att" onchange="updateReport()"> Attenuated NAPs/SEPs:</span>
+                                    <select id="ssep_ul_att_s" class="border rounded p-0.5" onchange="updateReport()"><option value="left">Left</option><option value="right">Right</option><option value="either" selected>Either</option></select>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
                 <div class="input-card border-t-4 border-t-pink-500">
-                    <label class="block font-bold text-pink-800 mb-2 border-b pb-1 text-base">2. Lower Limb SSEP (Tibial Nerve)</label>
+                    <label class="block font-bold text-pink-800 mb-2 border-b pb-1 text-base">2. Lower Limb (Tibial Nerve)</label>
                     <div class="space-y-3 text-sm">
-                        <div class="p-2 border rounded bg-pink-50 flex items-center justify-between">
+                        <div class="p-2 border rounded bg-pink-50 flex flex-col gap-2">
                             <label class="font-bold text-pink-700 flex items-center gap-2"><input type="checkbox" id="chk_ssep_ll_norm" checked onchange="updateReport()"> Normal Latencies</label>
-                            <select id="ssep_ll_norm_s" class="border p-1 rounded bg-white text-xs" onchange="updateReport()">
-                                <option value="either">Either</option><option value="left">Left</option><option value="right">Right</option>
-                            </select>
-                        </div>
-                        <div class="p-2 border rounded bg-red-50 space-y-2">
-                            <div class="font-bold text-red-700 text-xs border-b pb-1">Abnormal Findings:</div>
-                            <div class="flex justify-between items-center text-xs">
-                                <span>Prolonged latencies:</span>
-                                <div class="flex gap-2"><label><input type="checkbox" id="ssep_ll_pro_l" onchange="updateReport()"> L</label><label><input type="checkbox" id="ssep_ll_pro_r" onchange="updateReport()"> R</label></div>
+                            <div class="flex gap-4 text-xs ml-6">
+                                <label><input type="radio" name="ssep_ll_norm_s" value="left" onchange="updateReport()"> L</label>
+                                <label><input type="radio" name="ssep_ll_norm_s" value="right" onchange="updateReport()"> R</label>
+                                <label><input type="radio" name="ssep_ll_norm_s" value="either" checked onchange="updateReport()"> Either</label>
                             </div>
-                            <div class="flex justify-between items-center text-xs">
-                                <span>Attenuated cortical SEPs:</span>
-                                <div class="flex gap-2"><label><input type="checkbox" id="ssep_ll_att_l" onchange="updateReport()"> L</label><label><input type="checkbox" id="ssep_ll_att_r" onchange="updateReport()"> R</label></div>
+                        </div>
+
+                        <div class="p-2 border rounded bg-red-50 space-y-2">
+                            <label class="font-bold text-red-700 flex items-center gap-2 border-b pb-1"><input type="checkbox" id="chk_ssep_ll_abn" onchange="toggleModule('ssep_ll_abn_opts', 'chk_ssep_ll_abn'); checkSSEPAbnormal();"> Abnormal Findings</label>
+                            <div id="ssep_ll_abn_opts" class="hidden space-y-2">
+                                <div class="flex justify-between items-center text-xs">
+                                    <span class="font-semibold text-gray-700"><input type="checkbox" id="chk_ssep_ll_pro" onchange="updateReport()"> Prolonged latencies:</span>
+                                    <select id="ssep_ll_pro_s" class="border rounded p-0.5" onchange="updateReport()"><option value="left">Left</option><option value="right">Right</option><option value="either" selected>Either</option></select>
+                                </div>
+                                <div class="flex justify-between items-center text-xs">
+                                    <span class="font-semibold text-gray-700"><input type="checkbox" id="chk_ssep_ll_att" onchange="updateReport()"> Attenuated SEPs:</span>
+                                    <select id="ssep_ll_att_s" class="border rounded p-0.5" onchange="updateReport()"><option value="left">Left</option><option value="right">Right</option><option value="either" selected>Either</option></select>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="input-card border-t-4 border-t-purple-500">
-                    <label class="block font-bold text-purple-800 mb-1 text-sm border-b">3. SSEP Global Conclusion</label>
+                <div id="ssep_conclusion_block" class="input-card border-t-4 border-t-purple-500 hidden">
+                    <label class="block font-bold text-purple-800 mb-1 text-sm border-b pb-1">Abnormal Suggestion</label>
                     <div class="grid grid-cols-2 gap-2 text-xs pt-1">
                         <div>
                             <span class="text-gray-500">Side:</span><br>
-                            <label><input type="radio" name="ssep_con_s" value="left" onchange="updateReport()"> Left</label>
-                            <label class="ml-2"><input type="radio" name="ssep_con_s" value="right" onchange="updateReport()"> Right</label>
-                            <label class="ml-2"><input type="radio" name="ssep_con_s" value="bilateral" checked onchange="updateReport()"> Bil.</label>
+                            <select id="ssep_con_s" class="border rounded p-1 w-full mt-1" onchange="updateReport()">
+                                <option value="left">Left</option><option value="right">Right</option><option value="bilateral" selected>Bilateral</option>
+                            </select>
                         </div>
                         <div>
-                            <span class="text-gray-500">Lesion:</span><br>
-                            <label><input type="radio" name="ssep_con_t" value="peripheral" onchange="updateReport()"> Peri.</label>
-                            <label class="ml-2"><input type="radio" name="ssep_con_t" value="central" onchange="updateReport()"> Cent.</label>
-                            <label class="ml-2"><input type="radio" name="ssep_con_t" value="peripheral/central" checked onchange="updateReport()"> Both</label>
+                            <span class="text-gray-500">Lesion Type:</span><br>
+                            <select id="ssep_con_t" class="border rounded p-1 w-full mt-1" onchange="updateReport()">
+                                <option value="peripheral">Peripheral</option><option value="central">Central</option><option value="peripheral/central" selected>Peri/Cent</option>
+                            </select>
                         </div>
                     </div>
                 </div>
@@ -510,36 +524,39 @@
             </div>
 
             <!-- 【BAEP 表單】 -->
-            <div id="form-BAEP" class="form-section hidden">
+            <div id="form-BAEP" class="form-section">
                 <div class="input-card border-t-4 border-t-orange-500">
                     <label class="block font-bold text-orange-800 mb-2 border-b pb-1 text-base">BAEP</label>
                     <div class="space-y-3 text-sm">
-                        <div class="p-2 border rounded bg-orange-50 flex items-center justify-between">
-                            <label class="font-bold text-orange-700 flex items-center gap-2"><input type="checkbox" id="chk_baep_norm" checked onchange="updateReport()"> Normal</label>
-                            <select id="baep_norm_s" class="border p-1 rounded bg-white text-xs" onchange="updateReport()">
-                                <option value="either">Either</option><option value="left">Left</option><option value="right">Right</option>
-                            </select>
+                        <div class="p-2 border rounded bg-orange-50 flex flex-col gap-2">
+                            <label class="font-bold text-orange-700 flex items-center gap-1"><input type="checkbox" id="chk_baep_norm" checked onchange="updateReport()"> Normal</label>
+                            <div class="flex gap-4 text-xs pl-6">
+                                <label><input type="radio" name="baep_norm_s" value="left" onchange="updateReport()"> L</label>
+                                <label><input type="radio" name="baep_norm_s" value="right" onchange="updateReport()"> R</label>
+                                <label><input type="radio" name="baep_norm_s" value="either" checked onchange="updateReport()"> Either</label>
+                            </div>
                         </div>
+
                         <div class="p-2 border rounded bg-red-50">
-                            <label class="font-bold text-red-700 flex items-center gap-2 mb-2"><input type="checkbox" id="chk_baep_abn" onchange="toggleModule('baep_abn_opts', 'chk_baep_abn')"> Abnormal</label>
+                            <label class="font-bold text-red-700 flex items-center gap-1 mb-2"><input type="checkbox" id="chk_baep_abn" onchange="toggleModule('baep_abn_opts', 'chk_baep_abn')"> Abnormal</label>
                             <div id="baep_abn_opts" class="hidden space-y-3 border-t border-red-200 pt-2">
                                 <div>
                                     <span class="text-xs font-bold text-gray-700 block mb-1">Prolonged absolute latencies of:</span>
                                     <input type="text" id="baep_abs_val" class="border p-1 w-full rounded text-xs mb-1" placeholder="e.g. wave I, III, V" oninput="updateReport()">
-                                    <div class="flex gap-4 text-xs"><label><input type="radio" name="baep_abs_s" value="left" onchange="updateReport()"> Left ear</label><label><input type="radio" name="baep_abs_s" value="right" onchange="updateReport()"> Right ear</label><label><input type="radio" name="baep_abs_s" value="bilateral" checked onchange="updateReport()"> Both</label></div>
+                                    <div class="flex gap-4 text-xs"><label><input type="radio" name="baep_abs_s" value="left" onchange="updateReport()"> L</label><label><input type="radio" name="baep_abs_s" value="right" onchange="updateReport()"> R</label><label><input type="radio" name="baep_abs_s" value="bilateral" checked onchange="updateReport()"> Both</label></div>
                                 </div>
                                 <div class="border-t border-orange-200 pt-2">
                                     <span class="text-xs font-bold text-gray-700 block mb-1">With prolonged inter-peak latencies of:</span>
                                     <input type="text" id="baep_ipl_val" class="border p-1 w-full rounded text-xs mb-1" placeholder="e.g. I-III, III-V" oninput="updateReport()">
-                                    <div class="flex gap-4 text-xs"><label><input type="radio" name="baep_ipl_s" value="left" onchange="updateReport()"> Left ear</label><label><input type="radio" name="baep_ipl_s" value="right" onchange="updateReport()"> Right ear</label><label><input type="radio" name="baep_ipl_s" value="bilateral" checked onchange="updateReport()"> Both</label></div>
+                                    <div class="flex gap-4 text-xs"><label><input type="radio" name="baep_ipl_s" value="left" onchange="updateReport()"> L</label><label><input type="radio" name="baep_ipl_s" value="right" onchange="updateReport()"> R</label><label><input type="radio" name="baep_ipl_s" value="bilateral" checked onchange="updateReport()"> Both</label></div>
                                 </div>
                                 <div class="border-t border-orange-200 pt-2">
                                     <label class="text-xs font-bold text-gray-700 block mb-1 flex items-center gap-1"><input type="checkbox" id="baep_atten" onchange="updateReport()"> Attenuated</label>
-                                    <div class="flex gap-4 text-xs pl-4"><label><input type="radio" name="baep_att_s" value="left" onchange="updateReport()"> Left</label><label><input type="radio" name="baep_att_s" value="right" onchange="updateReport()"> Right</label></div>
+                                    <div class="flex gap-4 text-xs pl-4"><label><input type="radio" name="baep_att_s" value="left" onchange="updateReport()"> L</label><label><input type="radio" name="baep_att_s" value="right" onchange="updateReport()"> R</label></div>
                                 </div>
                                 <div class="border-t border-red-200 bg-white p-2 rounded shadow-sm mt-2">
                                     <span class="text-xs font-bold text-red-700 block mb-1">Conclusion Suggests</span>
-                                    <div class="flex gap-2 text-xs mb-2"><label><input type="radio" name="baep_con_s" value="left" onchange="updateReport()"> Left</label><label><input type="radio" name="baep_con_s" value="right" onchange="updateReport()"> Right</label><label><input type="radio" name="baep_con_s" value="bilateral" checked onchange="updateReport()"> Bilateral</label></div>
+                                    <div class="flex gap-2 text-xs mb-2"><label><input type="radio" name="baep_con_s" value="left" onchange="updateReport()"> L</label><label><input type="radio" name="baep_con_s" value="right" onchange="updateReport()"> R</label><label><input type="radio" name="baep_con_s" value="bilateral" checked onchange="updateReport()"> Bilateral</label></div>
                                     <div class="flex gap-2 text-xs"><label><input type="radio" name="baep_con_t" value="auditory nerve lesion" checked onchange="updateReport()"> Auditory nerve lesion</label><label><input type="radio" name="baep_con_t" value="brainstem disorders" onchange="updateReport()"> Brainstem disorders</label></div>
                                 </div>
                             </div>
@@ -549,18 +566,20 @@
             </div>
 
             <!-- 【VEP 表單】 -->
-            <div id="form-VEP" class="form-section hidden">
+            <div id="form-VEP" class="form-section">
                 <div class="input-card border-t-4 border-t-yellow-500">
                     <label class="block font-bold text-yellow-800 mb-2 border-b pb-1 text-base">VEP</label>
                     <div class="space-y-3 text-sm">
-                        <div class="p-2 border rounded bg-yellow-50 flex items-center justify-between">
-                            <label class="font-bold text-yellow-700 flex items-center gap-2"><input type="checkbox" id="chk_vep_norm" checked onchange="updateReport()"> Normal</label>
-                            <select id="vep_norm_s" class="border p-1 rounded bg-white text-xs" onchange="updateReport()">
-                                <option value="both">Both</option><option value="left">Left</option><option value="right">Right</option>
-                            </select>
+                        <div class="p-2 border rounded bg-yellow-50 flex flex-col gap-2">
+                            <label class="font-bold text-yellow-700 flex items-center gap-1"><input type="checkbox" id="chk_vep_norm" checked onchange="updateReport()"> Normal</label>
+                            <div class="flex gap-4 text-xs ml-6">
+                                <label><input type="radio" name="vep_norm_s" value="left" onchange="updateReport()"> L</label>
+                                <label><input type="radio" name="vep_norm_s" value="right" onchange="updateReport()"> R</label>
+                                <label><input type="radio" name="vep_norm_s" value="either" checked onchange="updateReport()"> Either</label>
+                            </div>
                         </div>
                         <div class="p-2 border rounded bg-red-50">
-                            <label class="font-bold text-red-700 flex items-center gap-2 mb-2"><input type="checkbox" id="chk_vep_abn" onchange="toggleModule('vep_abn_opts', 'chk_vep_abn')"> Abnormal</label>
+                            <label class="font-bold text-red-700 flex items-center gap-1 mb-2"><input type="checkbox" id="chk_vep_abn" onchange="toggleModule('vep_abn_opts', 'chk_vep_abn')"> Abnormal</label>
                             <div id="vep_abn_opts" class="hidden space-y-3 border-t border-red-200 pt-2">
                                 <div>
                                     <span class="text-xs font-bold text-gray-700 block mb-1">Modality</span>
@@ -568,11 +587,11 @@
                                 </div>
                                 <div class="border-t border-yellow-200 pt-2">
                                     <span class="text-xs font-bold text-gray-700 block mb-1">Prolonged Side (Eye)</span>
-                                    <div class="flex gap-4 text-xs"><label><input type="radio" name="vep_eye" value="left" onchange="updateReport()"> Left</label><label><input type="radio" name="vep_eye" value="right" onchange="updateReport()"> Right</label><label><input type="radio" name="vep_eye" value="either" checked onchange="updateReport()"> Either</label></div>
+                                    <div class="flex gap-4 text-xs"><label><input type="radio" name="vep_eye" value="left" onchange="updateReport()"> L</label><label><input type="radio" name="vep_eye" value="right" onchange="updateReport()"> R</label><label><input type="radio" name="vep_eye" value="either" checked onchange="updateReport()"> Either</label></div>
                                 </div>
                                 <div class="border-t border-red-200 bg-white p-2 rounded shadow-sm mt-2">
                                     <span class="text-xs font-bold text-red-700 block mb-1">Conclusion Lesion Side</span>
-                                    <div class="flex gap-3 text-xs"><label><input type="radio" name="vep_con_s" value="left" onchange="updateReport()"> Left</label><label><input type="radio" name="vep_con_s" value="right" onchange="updateReport()"> Right</label><label><input type="radio" name="vep_con_s" value="either" checked onchange="updateReport()"> Either</label></div>
+                                    <div class="flex gap-3 text-xs"><label><input type="radio" name="vep_con_s" value="left" onchange="updateReport()"> L</label><label><input type="radio" name="vep_con_s" value="right" onchange="updateReport()"> R</label><label><input type="radio" name="vep_con_s" value="either" checked onchange="updateReport()"> Either</label></div>
                                 </div>
                             </div>
                         </div>
@@ -590,9 +609,9 @@
 
     <script>
         // ==========================================
-        // 核心架構與基礎連接器
+        // 核心切換與工具
         // ==========================================
-        let currentTab = 'CCD'; 
+        let currentTab = ''; 
 
         function toggleModule(areaId, checkId) { 
             document.getElementById(areaId).classList.toggle('hidden', !document.getElementById(checkId).checked); 
@@ -609,13 +628,12 @@
                     btn.classList.add('bg-white', 'text-blue-700', 'border-blue-600'); 
                 }
             });
-            document.querySelectorAll('.form-section').forEach(sec => sec.classList.add('hidden'));
-            document.getElementById('form-' + tabName).classList.remove('hidden');
+            document.querySelectorAll('.form-section').forEach(sec => sec.style.display = 'none');
+            document.getElementById('form-' + tabName).style.display = 'block';
             document.getElementById('leftPanel').scrollTop = 0;
             updateReport();
         }
 
-        // 新增的智能血管字串合併引擎 (A, B and C)
         function smartJoinList(arr) {
             if (!arr || arr.length === 0) return "";
             if (arr.length === 1) return arr[0];
@@ -625,7 +643,6 @@
             return copy.join(", ") + " and " + last;
         }
 
-        // 重新撰寫格式化合併 (CCD/TCCS)
         function formatBilateralVessels(names, isTCCS = false) {
             if (names.length === 0) return "___";
             const baseNames = isTCCS ? ["MCA M1", "MCA M2", "ACA", "PCA P1", "PCA P2", "VA"] : ["CCA", "carotid bulb", "ICA", "ECA"];
@@ -653,7 +670,6 @@
             return smartJoinList(finalParts).replace(/ and bilateral /g, ", bilateral ").replace(/ and right /g, ", right ").replace(/ and left /g, ", left ");
         }
 
-        // 舊的 joinAndHelper 保留給其他模組使用
         function joinAndHelper(arr) {
             if (!arr || arr.length === 0) return "";
             if (arr.length === 1) return arr[0];
@@ -705,14 +721,13 @@
             });
             container.innerHTML = html;
         }
-        const upMotorFindings = [{id:'mabs', label:'Absence of CMAP response'}, {id:'mlat', label:'Prolonged distal motor latency'}, {id:'mamp', label:'Reduced CMAP amplitude'}, {id:'mcv', label:'Slowing of motor conduction velocity'}, {id:'fscv', label:'Focal slowing of motor conduction velocity'}];
-        const lowMotorFindings = [{id:'mabs', label:'Absence of CMAP response'}, {id:'mlat', label:'Prolonged distal motor latency'}, {id:'mamp', label:'Reduced CMAP amplitude'}, {id:'mcv', label:'Slowing of motor conduction velocity'}];
+        const motorFindings = [{id:'mabs', label:'Absence of CMAP response'}, {id:'mlat', label:'Prolonged distal motor latency'}, {id:'mamp', label:'Reduced CMAP amplitude'}, {id:'mcv', label:'Slowing of motor conduction velocity'}, {id:'fscv', label:'Focal slowing of motor conduction velocity'}];
         const upSensoryFindings = [{id:'sabs', label:'Absence of SAP response'}, {id:'samp', label:'Reduced SAP amplitude'}, {id:'scv', label:'Slowing of sensory conduction velocity'}];
         const lowSensoryFindings = [{id:'sabs', label:'Absence of SAP response'}, {id:'samp', label:'Reduced SAP amplitude'}, {id:'scv', label:'Slowing of sensory conduction velocity'}];
         
-        buildNCVFindingBlock('ncv_up_motor', upMotorFindings, ['median', 'ulnar', 'radial'], 'ncv-chk'); 
+        buildNCVFindingBlock('ncv_up_motor', motorFindings, ['median', 'ulnar', 'radial'], 'ncv-chk'); 
         buildNCVFindingBlock('ncv_up_sensory', upSensoryFindings, ['median', 'ulnar', 'radial'], 'ncv-chk'); 
-        buildNCVFindingBlock('ncv_low_motor', lowMotorFindings, ['peroneal', 'tibial'], 'ncv-chk'); 
+        buildNCVFindingBlock('ncv_low_motor', motorFindings, ['peroneal', 'tibial'], 'ncv-chk'); 
         buildNCVFindingBlock('ncv_low_sensory', lowSensoryFindings, ['superficial peroneal', 'sural'], 'ncv-chk');
 
         const fwNerves = ['median', 'ulnar', 'peroneal', 'tibial'];
@@ -735,6 +750,13 @@
         function toggleSSRAbnormal() { document.getElementById('ss_abnormal_opts').classList.toggle('hidden', document.querySelector('input[name="ss_type"]:checked').value === 'normal'); updateReport(); }
         function toggleSTAState() { document.getElementById('staAbnormalArea').classList.toggle('hidden', document.querySelector('input[name="sta_state"]:checked').value === 'normal'); updateReport(); }
 
+        function checkSSEPAbnormal() {
+            const ulAbn = document.getElementById('chk_ssep_ul_abn').checked;
+            const llAbn = document.getElementById('chk_ssep_ll_abn').checked;
+            document.getElementById('ssep_conclusion_block').classList.toggle('hidden', !(ulAbn || llAbn));
+            updateReport();
+        }
+
         function updateReport() {
             const reportBox = document.getElementById('reportBox');
             if (currentTab === 'CCD') generateCCDReport(reportBox);
@@ -749,7 +771,7 @@
         }
 
         // ==========================================
-        // 模組 1：CCD (含 Smart Join)
+        // 各模組報告生成邏輯
         // ==========================================
         function generateCCDReport(reportBox) {
             const loc = document.querySelector('input[name="loc"]:checked').value; const vaUnit = (loc === '生醫') ? 'cm' : 'mm'; const mainType = document.querySelector('input[name="mainType"]:checked').value;
@@ -765,7 +787,6 @@
                 const container = sel.closest('.vessel-item-container'); const vName = sel.dataset.v; 
                 const drInput = container.querySelector('.v-dr').value; const psvInput = container.querySelector('.v-psv'); const edvInput = container.querySelector('.v-edv'); const psvEdvBox = container.querySelector('.psv-edv-box');
                 let isSevere = false; let degree = sel.value;
-
                 if (drInput) {
                     hasDR = true; let drNum = parseFloat(drInput); let side = vName.includes('right') ? 'right' : 'left'; let part = vName.replace('right ', '').replace('left ', '').replace('carotid bulb', 'Bulb').replace('ICA', 'ICA').replace('ECA', 'ECA').replace('CCA', 'CCA');
                     drValues[side][part] = drInput;
@@ -824,13 +845,9 @@
             if (isSTA) { if (document.querySelector('input[name="sta_state"]:checked').value === 'normal') conclusions.push("The sampled bilateral STAs and OCAs were unremarkable."); else { const side = document.querySelector('input[name="sta_side"]:checked').value; let checkedVessels = []; let riStrings = []; if (document.getElementById('sta_check_sta').checked) { checkedVessels.push("STA"); riStrings.push(`STA RI [R/L]: ${document.getElementById('sta_ri_r').value || "-"}/${document.getElementById('sta_ri_l').value || "-"}`); } if (document.getElementById('sta_check_oca').checked) { checkedVessels.push("OCA"); riStrings.push(`OCA RI [R/L]: ${document.getElementById('oca_ri_r').value || "-"}/${document.getElementById('oca_ri_l').value || "-"}`); } if (checkedVessels.length > 0) conclusions.push(`Reduced flow resistance in the ${side} ${checkedVessels.join(" and ")} compared to the contralateral side. (${riStrings.join("; ")}) ${side.charAt(0).toUpperCase() + side.slice(1)} dural AV fistula could not be ruled out. Suggest brain CTA for survey.`); } }
             if (isStent) { let sSide = document.querySelector('input[name="stent_side"]:checked').value; let sPsv = parseFloat(document.getElementById('stent_psv').value) || 0; let sEdv = document.getElementById('stent_edv').value || "0"; if (sPsv < 175) conclusions.push(`Stent was set from the ${sSide} ICA to CCA with normal in-stent flow velocity. (PSV/EDV=${sPsv}/${sEdv} cm/s)`); else conclusions.push(`Stent was set from the ${sSide} ICA to CCA with increased in-stent flow velocity (PSV/EDV=${sPsv}/${sEdv} cm/s), indicating in-stent re-stenosis.`); }
             if (isSteal) { let side = document.querySelector('input[name="steal_side"]:checked').value; let stage = document.querySelector('input[name="steal_stage"]:checked').value; let wave = document.querySelector('input[name="steal_wave"]:checked').value; if (stage === 'early') conclusions.push(`Bunny waveform in the ${side} VA with ${wave} waveform in the ${side} subclavian artery, indicating early stage of subclavian steal phenomenon due to stenosis in the ${side} proximal subclavian artery.`); else conclusions.push(`Biphasic waveform/reversed flow direction in the ${side} VA with ${wave} waveform in the ${side} subclavian artery, indicating late stage of ${side} subclavian steal phenomenon due to stenosis in the ${side} proximal subclavian artery.`); }
-            
             reportText += `Conclusion:\n` + conclusions.map((c, i) => `${i+1}. ${c}`).join("\n"); reportBox.value = reportText.trim();
         }
 
-        // ==========================================
-        // 模組 2：TCD / TCCS (含 Smart Join)
-        // ==========================================
         function generateTCDReport(reportBox) {
             let finalStr = `[Midline/TCCS]:\n`;
             const aRaw = document.getElementById('tcd_mid_l').value; const bRaw = document.getElementById('tcd_mid_r').value; const dRaw = document.getElementById('tcd_mid_d').value;
@@ -860,9 +877,6 @@
             reportBox.value = finalStr.trim();
         }
 
-        // ==========================================
-        // 模組 3：NCV
-        // ==========================================
         function generateNCVReport(reportBox) {
             let finalStr = `[NCV]:\n`;
             const globalStatus = document.querySelector('input[name="ncv_global"]:checked').value;
@@ -873,13 +887,6 @@
                 finalStr += `The results of the NCV study showed:\n`;
 
                 function formatFindingSentence(findingsArr, side, nerveName) {
-                    let hasFocal = findingsArr.some(f => f.includes('Focal slowing'));
-                    let suffix = "";
-                    if (hasFocal) {
-                        if (nerveName === 'median') suffix = " at wrist";
-                        else if (nerveName === 'ulnar') suffix = " across the elbow";
-                    }
-
                     let formatted = findingsArr.map((f, i) => { 
                         let lower = f.charAt(0).toLowerCase() + f.slice(1); 
                         if (side === 'bilateral' && !lower.includes('absence of')) {
@@ -887,17 +894,25 @@
                         }
                         return (i === 0) ? f : lower; 
                     });
-                    
-                    let fText = joinAndHelper(formatted);
+                    let fText = smartJoinList(formatted);
                     let nText = side === 'bilateral' ? `bilateral ${nerveName} nerves` : `the ${side} ${nerveName} nerve`;
-                    return `- ${fText} in ${nText}${suffix}.`;
+                    return `- ${fText} in ${nText}.`;
                 }
 
                 let motorLines = []; let sensoryLines = [];
                 let motorMap = {}; let sensoryMap = {};
+                let focalSlowingConclusionLines = []; // 特殊抽離
                 
                 document.querySelectorAll('.ncv-chk:checked').forEach(chk => {
                     let n = chk.dataset.n; let s = chk.dataset.s; let f = chk.dataset.f; let t = chk.dataset.t;
+                    
+                    if (f === 'Focal slowing of motor conduction velocity') {
+                        let loc = n === 'median' ? 'at wrist' : 'across the elbow';
+                        let noun = s === 'bilateral' ? 'nerves' : 'nerve';
+                        focalSlowingConclusionLines.push(`Focal slowing of motor conduction velocity in ${s} ${n} ${noun} ${loc}.`);
+                        return; // 跳過一般 finding 的迴圈
+                    }
+
                     let targetMap = t === 'motor' ? motorMap : sensoryMap;
                     if(!targetMap[n]) targetMap[n] = {right:[], left:[], bilateral:[]};
                     targetMap[n][s].push(f);
@@ -989,6 +1004,13 @@
 
             // Conclusion
             let conLines = [];
+
+            // 把前面暫存的 focalSlowingConclusionLines 放進來
+            // 因為這是我們把 Focal Slowing 獨立拉到 Conclusion 的邏輯
+            if(typeof focalSlowingConclusionLines !== 'undefined' && focalSlowingConclusionLines.length > 0) {
+                conLines.push(...focalSlowingConclusionLines);
+            }
+
             if (document.getElementById('con_entrap').checked) {
                 let s = document.querySelector('input[name="entrap_s"]:checked').value;
                 let n = document.querySelector('input[name="entrap_n"]:checked').value;
@@ -1014,9 +1036,6 @@
             reportBox.value = finalStr.trim();
         }
 
-        // ==========================================
-        // 模組 4：ENoG / Blink
-        // ==========================================
         function generateENoGBlinkReport(reportBox) {
             let finalStr = `[ENoG / Blink]:\n`; const enogType = document.querySelector('input[name="enog_type"]:checked').value; let r = parseFloat(document.getElementById('enog_r').value); let l = parseFloat(document.getElementById('enog_l').value); let ratioStr = "___ %, ___ to ___";
             if (!isNaN(r) && !isNaN(l) && r > 0 && l > 0) { if (r > l) ratioStr = `${((l/r)*100).toFixed(1)} %, Left to Right`; else if (l > r) ratioStr = `${((r/l)*100).toFixed(1)} %, Right to Left`; else ratioStr = `100.0 %, equal`; }
@@ -1028,14 +1047,8 @@
             finalStr += `\nAdvise clinical correlation.`; reportBox.value = finalStr.trim();
         }
 
-        // ==========================================
-        // 模組 5：RST
-        // ==========================================
         function generateRSTReport(reportBox) { let finalStr = `[RST]:\n`; const type = document.querySelector('input[name="rst_type"]:checked').value; if (type === 'normal') finalStr += `The 3Hz repetitive stimulation study showed no significant decremental change both at resting and post-exercise.`; else finalStr += `The results of the 3Hz repetitive stimulation test showed decremental changes both at resting and post-exercise.`; finalStr += `\n\nAdvise clinical correlation.`; reportBox.value = finalStr; }
 
-        // ==========================================
-        // 模組 6：SSR / RRIV
-        // ==========================================
         function generateSSRReport(reportBox) {
             let finalStr = `[SSR / RRIV]:\n`; const type = document.querySelector('input[name="ss_type"]:checked').value; const ageTag = document.getElementById('chk_ssr_age').checked ? " According to the age group 60-69, because normal limits of his/her age were not established." : "";
             if (type === 'normal') { finalStr += `The sympathetic skin response (SSR) of palm and sole was normal.\nThe heart rate (R-R) interval variation (RRIV) was within normal limits at rest and during deep breathing.${ageTag}`; } 
@@ -1043,81 +1056,113 @@
             finalStr += `\n\nAdvise clinical correlation.`; reportBox.value = finalStr;
         }
 
-        // ==========================================
-        // 模組 7：SSEP (整合版)
-        // ==========================================
-        function generateSSEPReport(reportBox) {
-            let finalLines = [];
-            
-            // Upper Limb
-            if (document.getElementById('chk_ssep_ul_norm').checked) { 
-                let side = document.getElementById('ssep_ul_norm_s').value; 
-                if (side !== 'either') finalLines.push(`Normal absolute latencies of brachial NAPs, cervical SEPs, cortical SEPs and normal central conduction time from ${side} median nerve.`);
-                else finalLines.push(`Normal absolute latencies of brachial NAPs, cervical SEPs, cortical SEPs and normal central conduction time from either median nerve.`); 
-            } else {
-                let pL = document.getElementById('ssep_ul_pro_l').checked; let pR = document.getElementById('ssep_ul_pro_r').checked;
-                if(pL || pR) { let side = (pL && pR) ? "bilateral" : (pL ? "left" : "right"); finalLines.push(`Prolonged absolute latencies of brachial NAPs, cervical SEPs and cortical SEPs and prolonged N9-13, N13-20 central conduction time from the ${side} median nerve.`); }
-                let aL = document.getElementById('ssep_ul_att_l').checked; let aR = document.getElementById('ssep_ul_att_r').checked;
-                if(aL || aR) { let side = (aL && aR) ? "bilateral" : (aL ? "left" : "right"); finalLines.push(`Attenuated brachial NAPs, cervical SEPs and cortical SEPs from the ${side} median nerve.`); }
-            }
+// --- SSEP 智慧語法修正 ---
+function generateSSEPReport(reportBox) {
+    let finalLines = [];
+    let hasAbnormal = false;
 
-            // Lower Limb
-            if (document.getElementById('chk_ssep_ll_norm').checked) { 
-                let side = document.getElementById('ssep_ll_norm_s').value; 
-                if (side !== 'either') finalLines.push(`Normal absolute latencies of cortical SEPs from ${side} tibial nerve.`);
-                else finalLines.push(`Normal absolute latencies of cortical SEPs from either tibial nerve.`);
-            } else {
-                let pL = document.getElementById('ssep_ll_pro_l').checked; let pR = document.getElementById('ssep_ll_pro_r').checked;
-                if(pL || pR) { let side = (pL && pR) ? "bilateral" : (pL ? "left" : "right"); finalLines.push(`Prolonged absolute latencies of cortical SEPs from the ${side} tibial nerve.`); }
-                let aL = document.getElementById('ssep_ll_att_l').checked; let aR = document.getElementById('ssep_ll_att_r').checked;
-                if(aL || aR) { let side = (aL && aR) ? "bilateral" : (aL ? "left" : "right"); finalLines.push(`Attenuated cortical SEPs from the ${side} tibial nerve.`); }
-            }
+    // 1. Upper Limb 邏輯修正
 
-            // Conclusion
-            let conS = document.querySelector('input[name="ssep_con_s"]:checked').value; 
-            let conT = document.querySelector('input[name="ssep_con_t"]:checked').value;
-            let finalSide = conS === 'bilateral' ? 'bilateral' : `a ${conS}`;
-            finalLines.push(`\nConclusion: The above findings may suggest ${finalSide} ${conT} lesions.`);
-
-            reportBox.value = `[SSEP]:\n` + finalLines.join("\n") + `\n\nAdvise clinical correlation.`;
+    if (document.getElementById('chk_ssep_ul_norm')?.checked) {
+        let side = document.querySelector('input[name="ssep_ul_norm_s"]:checked')?.value || "either";
+        finalLines.push(`Normal absolute latencies of brachial NAPs, cervical SEPs, cortical SEPs and normal central conduction time from ${side} median nerve.`);
+    }
+    if (document.getElementById('chk_ssep_ul_abn')?.checked) {
+        hasAbnormal = true;
+        if (document.getElementById('chk_ssep_ul_pro')?.checked) {
+            let side = document.getElementById('ssep_ul_pro_s')?.value || "either";
+            finalLines.push(`Prolonged absolute latencies of brachial NAPs, cervical SEPs and cortical SEPs and prolonged N9-13, N13-20 central conduction time from the ${side} median nerve.`);
         }
-
-        // ==========================================
-        // 模組 8：BAEP
-        // ==========================================
-        function generateBAEPReport(reportBox) {
-            let finalStr = `[BAEP]:\n`;
-            if (document.getElementById('chk_baep_norm').checked) { let normS = document.querySelector('input[name="baep_norm_s"]:checked').value; finalStr += `Normal absolute and inter-peak latencies of brainstem auditory evoked potentials from ${normS} ear.\n`; }
-            if (document.getElementById('chk_baep_abn').checked) {
-                let absV = document.getElementById('baep_abs_val').value || "___"; let absS = document.querySelector('input[name="baep_abs_s"]:checked').value; let iplV = document.getElementById('baep_ipl_val').value || "___"; let iplS = document.querySelector('input[name="baep_ipl_s"]:checked').value;
-                finalStr += `Prolonged absolute latencies of ${absV} from the ${absS} ear with prolonged ${iplV} inter-peak latencies from ${iplS} ear.\n`;
-                if(document.getElementById('baep_atten').checked) { let attS = document.querySelector('input[name="baep_att_s"]:checked').value; finalStr += `Attenuated BAEP from the ${attS} ear.\n`; }
-                let conS = document.querySelector('input[name="baep_con_s"]:checked').value; let conT = document.querySelector('input[name="baep_con_t"]:checked').value; finalStr += `\nThese findings may suggest probably a ${conS} ${conT}.\n`;
-            }
-            finalStr += `\nAdvise clinical correlation.`; reportBox.value = finalStr;
+        if (document.getElementById('chk_ssep_ul_att')?.checked) {
+            let side = document.getElementById('ssep_ul_att_s')?.value || "either";
+            finalLines.push(`Attenuated brachial NAPs, cervical SEPs and cortical SEPs from the ${side} median nerve.`);
         }
+    }
 
-        // ==========================================
-        // 模組 9：VEP
-        // ==========================================
-        function generateVEPReport(reportBox) {
-            let finalStr = `[VEP]:\n`;
-            if (document.getElementById('chk_vep_norm').checked) { let normS = document.querySelector('input[name="vep_norm_s"]:checked').value; finalStr += `Normal absolute P100 latencies of pattern VEP from ${normS === 'both' ? 'both eyes' : normS + ' eye'}.\n`; }
-            if (document.getElementById('chk_vep_abn').checked) {
-                let mod = document.querySelector('input[name="vep_mod"]:checked').value; let eye = document.querySelector('input[name="vep_eye"]:checked').value;
-                let eyeStr = eye === 'either' ? 'either eye' : eye + ' eye';
-                if(mod === 'pattern') finalStr += `Prolonged absolute P100 latencies of pattern VEP from ${eyeStr}.\n`; else finalStr += `Prolonged absolute latencies of goggle VEP from ${eyeStr}.\n`;
-                let conS = document.querySelector('input[name="vep_con_s"]:checked').value; finalStr += `Lesions over ${conS} visual conduction pathways should be considered.\n`;
-            }
-            finalStr += `\nAdvise clinical correlation.`; reportBox.value = finalStr;
+    // 2. Lower Limb 邏輯修正
+    if (document.getElementById('chk_ssep_ll_norm')?.checked) { 
+        let side = document.querySelector('input[name="ssep_ll_norm_s"]:checked')?.value || "either";
+        finalLines.push(`Normal absolute latencies of cortical SEPs from ${side} tibial nerve.`);
+    }
+    if (document.getElementById('chk_ssep_ll_abn')?.checked) {
+        hasAbnormal = true;
+        if (document.getElementById('chk_ssep_ll_pro')?.checked) {
+            let side = document.getElementById('ssep_ll_pro_s')?.value || "either";
+            finalLines.push(`Prolonged absolute latencies of cortical SEPs from the ${side} tibial nerve.`);
         }
+        if (document.getElementById('chk_ssep_ll_att')?.checked) {
+            let side = document.getElementById('ssep_ll_att_s')?.value || "either";
+            finalLines.push(`Attenuated cortical SEPs from the ${side} tibial nerve.`);
+        }
+    }
+
+    // 3. Conclusion 顯示處理
+    document.getElementById('ssep_conclusion_block')?.classList.toggle('hidden', !hasAbnormal);
+
+    let reportText = finalLines.length > 0 ? finalLines.join("\n") : "請在左側勾選屬性以產生文字。";
+    
+    if (hasAbnormal) {
+        // 確保這裡抓到的也是正確的選單值
+        let conS = document.getElementById('ssep_con_s')?.value || "bilateral";
+        let conT = document.getElementById('ssep_con_t')?.value || "peripheral/central";
+        reportText += `\n\nThe above findings may suggest ${conS} ${conT} lesions.`;
+    }
+
+    reportBox.value = `[SSEP]:\n` + reportText + `\n\nAdvise clinical correlation.`;
+}
+
+
+// --- BAEP 智慧語法修正 ---
+function generateBAEPReport(reportBox) {
+    let finalLines = [];
+    if (document.getElementById('chk_baep_norm').checked) {
+        // 抓取 Radio 的值 (例如 'either', 'left', 'right')
+        let s = document.querySelector('input[name="baep_norm_s"]:checked')?.value || "either";
+        finalLines.push(`Normal absolute and inter-peak latencies of auditory brainstem evoked potentials (BAEP) from ${s} ear.`);
+    }
+    if (document.getElementById('chk_baep_abn').checked) {
+        let absV = document.getElementById('baep_abs_val').value || "___";
+        let absS = document.querySelector('input[name="baep_abs_s"]:checked')?.value || "bilateral";
+        let iplV = document.getElementById('baep_ipl_val').value || "___";
+        let iplS = document.querySelector('input[name="baep_ipl_s"]:checked')?.value || "bilateral";
+        
+        let abnText = `Prolonged absolute latencies of ${absV} from the ${absS} ear with prolonged ${iplV} inter-peak latencies from ${iplS} ear.`;
+        if(document.getElementById('baep_atten').checked) {
+            let attS = document.querySelector('input[name="baep_att_s"]:checked')?.value || "left";
+            abnText += ` Attenuated BAEP from the ${attS} ear.`;
+        }
+        let conS = document.querySelector('input[name="baep_con_s"]:checked')?.value || "bilateral";
+        let conT = document.querySelector('input[name="baep_con_t"]:checked')?.value || "auditory nerve lesion";
+        abnText += `\nConclusion: These findings may suggest probably ${conS} ${conT}.`;
+        finalLines.push(abnText);
+    }
+    reportBox.value = finalLines.length > 0 ? `[BAEP]:\n` + finalLines.join("\n\n") + `\n\nAdvise clinical correlation.` : "[BAEP]:\n請勾選狀態。";
+}
+
+// --- VEP 智慧語法修正 ---
+function generateVEPReport(reportBox) {
+    let finalLines = [];
+    if (document.getElementById('chk_vep_norm').checked) {
+        let s = document.querySelector('input[name="vep_norm_s"]:checked')?.value || "either";
+        finalLines.push(`Normal absolute P100 latencies of pattern VEP from ${s} eye.`);
+    }
+    if (document.getElementById('chk_vep_abn').checked) {
+        let mod = document.querySelector('input[name="vep_mod"]:checked')?.value || "pattern";
+        let eye = document.querySelector('input[name="vep_eye"]:checked')?.value || "either";
+        let abnText = `Prolonged absolute latencies of ${mod} VEP from ${eye} eye.`;
+        let conS = document.querySelector('input[name="vep_con_s"]:checked')?.value || "either";
+        abnText += ` Lesions over ${conS} visual conduction pathways should be considered.`;
+        finalLines.push(abnText);
+    }
+    reportBox.value = finalLines.length > 0 ? `[VEP]:\n` + finalLines.join("\n\n") + `\n\nAdvise clinical correlation.` : "[VEP]:\n請勾選狀態。";
+}
 
         function copyCleanReport() {
-            const raw = document.getElementById('reportBox').value; if(raw.includes("[系統提示]")) { alert("目前頁籤尚無正式報告可複製！"); return; }
+            const raw = document.getElementById('reportBox').value; if(raw.includes("[系統提示]") || raw.includes("請在左側勾選狀態")) { alert("目前頁籤尚無正式報告可複製！"); return; }
             const clean = raw.replace(/^\[.*?\]:\s*/gm, ""); const temp = document.createElement('textarea'); temp.value = clean.trim(); document.body.appendChild(temp); temp.select(); document.execCommand('copy'); document.body.removeChild(temp); alert("報告複製成功！(識別標籤已自動隱藏)");
         }
         
-        openTab('CCD');
+        openTab('SSEP'); // 以 SSEP 做為起始畫面，方便檢視更新效果
     </script>
 </body>
 </html>
