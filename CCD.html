@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>神經科檢查報告系統 v12 </title>
+    <title>神經科檢查報告系統 v13 </title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .report-textarea { font-family: 'Courier New', Courier, monospace; min-height: 650px; white-space: pre-wrap; }
@@ -20,7 +20,7 @@
 <body class="bg-gray-100 flex flex-col h-screen overflow-hidden text-gray-800">
 
     <header class="bg-slate-800 text-white p-4 shadow-md flex justify-between items-center z-20">
-        <h1 class="text-xl font-bold tracking-wide">Neuro-Reporting System v12</h1>
+        <h1 class="text-xl font-bold tracking-wide">Neuro-Reporting System v13</h1>
         <button onclick="copyCleanReport()" class="bg-green-600 hover:bg-green-500 text-white px-6 py-2 rounded shadow transition font-bold">複製報告 (自動過濾標籤)</button>
     </header>
 
@@ -168,9 +168,12 @@
 
             <!-- 【Midline/TCCS 表單】 -->
             <div id="form-TCD" class="form-section">
+                <!-- Midline 區塊 (預設折疊) -->
                 <div class="input-card border-t-4 border-t-teal-500">
-                    <label class="block font-bold text-teal-800 mb-2 border-b pb-1 text-base">1. Midline Measurement</label>
-                    <div class="space-y-3 text-sm">
+                    <label class="font-bold text-teal-800 mb-2 border-b pb-1 text-base flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="chk_midline" onchange="toggleModule('midline_area', 'chk_midline')"> 1. Midline Measurement
+                    </label>
+                    <div id="midline_area" class="hidden space-y-3 text-sm mt-2 pl-2">
                         <div class="flex justify-between items-center">
                             <span class="text-gray-700 w-2/3">Left temporal to 3rd ventricle (cm):</span>
                             <input type="number" id="tcd_mid_l" step="0.01" class="border rounded p-1 w-20 text-center" oninput="updateReport()">
@@ -186,9 +189,18 @@
                     </div>
                 </div>
 
+                <!-- 新增：TCCS 自動解析貼上區塊 -->
+                <div class="input-card border-t-4 border-t-amber-400">
+                    <label class="block font-bold text-gray-800 mb-2 border-b pb-1">TCCS Data Auto-Parser</label>
+                    <textarea id="tccs_paste_box" rows="2" class="w-full border border-amber-300 p-2 rounded bg-amber-50 text-gray-600 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-amber-400 text-xs font-mono" placeholder="請貼上TCCS數據，系統將自動解析 PI(>1.3), MV(衰減), PSV(>140)..." oninput="parseTCCSData()"></textarea>
+                </div>
+
+                <!-- TCCS 報告屬性區塊 (預設折疊) -->
                 <div class="input-card border-t-4 border-t-purple-500">
-                    <label class="block font-bold text-purple-800 mb-2 border-b pb-1 text-base">2. TCCS (報告屬性)</label>
-                    <div class="space-y-3 text-sm">
+                    <label class="font-bold text-purple-800 mb-2 border-b pb-1 text-base flex items-center gap-2 cursor-pointer">
+                        <input type="checkbox" id="chk_tccs_attr" onchange="toggleModule('tccs_attr_area', 'chk_tccs_attr')"> 2. TCCS (報告屬性)
+                    </label>
+                    <div id="tccs_attr_area" class="hidden space-y-3 text-sm mt-2 pl-2 border-l-2 border-purple-200">
                         <div class="pt-1">
                             <label class="flex items-center gap-1 font-bold text-slate-800"><input type="checkbox" id="chk_tccs_poor" onchange="toggleModule('tccs_poor_area', 'chk_tccs_poor')"> Poor window</label>
                             <div id="tccs_poor_area" class="hidden sub-input-box border-slate-400">
@@ -796,7 +808,7 @@ function parseCCDData() {
 
     let parsedSomething = false;
 
-    // 1. 嘗試解析【生醫版 VA Flow】(不會觸發新竹版的表格解析)
+    // 1. 解析【生醫版 VA Flow】
     const rightMatch = text.match(/Right\s+([0-9.]+)\s+([0-9.]+)/i);
     const leftMatch = text.match(/Left\s+([0-9.]+)\s+([0-9.]+)/i);
     
@@ -811,21 +823,20 @@ function parseCCDData() {
         parsedSomething = true;
     }
 
-    // 2. 嘗試解析【新竹版 完整表格】
+    // 2. 解析【新竹版 完整表格】
     if (text.includes('ICA') && text.includes('Diam') && text.includes('Flow')) {
         let data = {
             R: { ICA_DR: '', ECA_DR: '', BIF_DR: '', CCA_DR: '', CCA_IMT: '', VA_DIA: '', VA_FLOW: '', ICA_RI: 0, ECA_RI: 0, CCA_RI: 0 },
             L: { ICA_DR: '', ECA_DR: '', BIF_DR: '', CCA_DR: '', CCA_IMT: '', VA_DIA: '', VA_FLOW: '', ICA_RI: 0, ECA_RI: 0, CCA_RI: 0 },
-            _foundIMT: false // 新增：用來追蹤是否剛經過 IMT 行
+            _foundIMT: false 
         };
 
         let currentSec = '';
-        let rHeaders = {}, lHeaders = {};
 
         text.split('\n').forEach(line => {
             if (!line.trim()) return;
             
-            // 動態尋找每一行的第二個關鍵字作為精準切分點
+            // 動態對半切分字串，確保左右兩側獨立判斷
             let words = line.trim().split(/\s+/);
             let lineKey = words[0];
             let pR = line, pL = "";
@@ -847,25 +858,21 @@ function parseCCDData() {
                 pL = line.substring(Math.floor(line.length / 2));
             }
 
-            if (line.includes('ICA') && line.includes('ECA')) { 
-                currentSec = 'ICA_ECA'; 
-                rHeaders.ICA = pR.indexOf('ICA'); rHeaders.ECA = pR.indexOf('ECA'); 
-                lHeaders.ICA = pL.indexOf('ICA'); lHeaders.ECA = pL.indexOf('ECA'); 
-            }
+            if (line.includes('ICA') && line.includes('ECA')) { currentSec = 'ICA_ECA'; }
             else if (line.includes('BIF')) { currentSec = 'BIF'; }
-            else if (line.includes('CCA') && line.includes('VA')) { 
-                currentSec = 'CCA_VA'; 
-                rHeaders.CCA = pR.indexOf('CCA'); rHeaders.VA = pR.indexOf('VA'); 
-                lHeaders.CCA = pL.indexOf('CCA'); lHeaders.VA = pL.indexOf('VA'); 
-            }
+            else if (line.includes('CCA') && line.includes('VA')) { currentSec = 'CCA_VA'; }
 
-            const extractDual = (part, h1, h2) => {
+            // 核心修改：捨棄表頭對齊，改用實體字元位置(如您所說的空格數)直接判定
+            const extractDual = (part) => {
                 let res = { v1: '', v2: '' };
                 let matches = [...part.matchAll(/(\d+(\.\d+)?)/g)];
-                if (matches.length >= 2) { res.v1 = matches[0][0]; res.v2 = matches[1][0]; } 
-                else if (matches.length === 1) {
+                if (matches.length >= 2) { 
+                    res.v1 = matches[0][0]; 
+                    res.v2 = matches[1][0]; 
+                } else if (matches.length === 1) {
                     let idx = matches[0].index;
-                    if (Math.abs(idx - h1) <= Math.abs(idx - h2)) res.v1 = matches[0][0];
+                    // 第一欄(ICA/CCA)通常距離開頭小於 15 個字元
+                    if (idx < 15) res.v1 = matches[0][0];
                     else res.v2 = matches[0][0];
                 }
                 return res;
@@ -875,12 +882,12 @@ function parseCCDData() {
 
             if (currentSec === 'ICA_ECA') {
                 if (line.includes('DR')) {
-                    let valsR = extractDual(pR, rHeaders.ICA, rHeaders.ECA); let valsL = extractDual(pL, lHeaders.ICA, lHeaders.ECA);
+                    let valsR = extractDual(pR); let valsL = extractDual(pL);
                     if(valsR.v1) data.R.ICA_DR = valsR.v1; if(valsR.v2) data.R.ECA_DR = valsR.v2;
                     if(valsL.v1) data.L.ICA_DR = valsL.v1; if(valsL.v2) data.L.ECA_DR = valsL.v2;
                 }
                 if (line.includes('RI')) {
-                    let valsR = extractDual(pR, rHeaders.ICA, rHeaders.ECA); let valsL = extractDual(pL, lHeaders.ICA, lHeaders.ECA);
+                    let valsR = extractDual(pR); let valsL = extractDual(pL);
                     if(valsR.v1) data.R.ICA_RI = parseFloat(valsR.v1); if(valsR.v2) data.R.ECA_RI = parseFloat(valsR.v2);
                     if(valsL.v1) data.L.ICA_RI = parseFloat(valsL.v1); if(valsL.v2) data.L.ECA_RI = parseFloat(valsL.v2);
                 }
@@ -891,29 +898,27 @@ function parseCCDData() {
             }
             if (currentSec === 'CCA_VA') {
                 if (line.includes('Diam')) {
-                    let valsR = extractDual(pR, rHeaders.CCA, rHeaders.VA); let valsL = extractDual(pL, lHeaders.CCA, lHeaders.VA);
+                    let valsR = extractDual(pR); let valsL = extractDual(pL);
                     if(valsR.v2) data.R.VA_DIA = valsR.v2; else if(valsR.v1) data.R.VA_DIA = valsR.v1;
                     if(valsL.v2) data.L.VA_DIA = valsL.v2; else if(valsL.v1) data.L.VA_DIA = valsL.v1;
                 }
                 if (line.includes('Flow')) {
-                    let valsR = extractDual(pR, rHeaders.CCA, rHeaders.VA); let valsL = extractDual(pL, lHeaders.CCA, lHeaders.VA);
+                    let valsR = extractDual(pR); let valsL = extractDual(pL);
                     if(valsR.v2) data.R.VA_FLOW = valsR.v2; else if(valsR.v1) data.R.VA_FLOW = valsR.v1;
                     if(valsL.v2) data.L.VA_FLOW = valsL.v2; else if(valsL.v1) data.L.VA_FLOW = valsL.v1;
                 }
                 if (line.includes('IMT')) {
-                    // IMT 每側只有一個數值，直接抓取唯一數字，無視標題對齊位置
                     let rM = extractSingle(pR); if (rM) data.R.CCA_IMT = rM;
                     let lM = extractSingle(pL); if (lM) data.L.CCA_IMT = lM;
                     data._foundIMT = true; 
                 }
                 else if (line.includes('AR') && data._foundIMT && !data.R.CCA_DR && !data.L.CCA_DR) { 
-                    // 同理，CCA DR 也直接抓取該行唯一數字
                     let rM = extractSingle(pR); if (rM) data.R.CCA_DR = rM;
                     let lM = extractSingle(pL); if (lM) data.L.CCA_DR = lM;
                     data._foundIMT = false; 
                 }
                 if (line.includes('RI')) {
-                    let valsR = extractDual(pR, rHeaders.CCA, rHeaders.VA); let valsL = extractDual(pL, lHeaders.CCA, lHeaders.VA);
+                    let valsR = extractDual(pR); let valsL = extractDual(pL);
                     if(valsR.v1) data.R.CCA_RI = parseFloat(valsR.v1); if(valsL.v1) data.L.CCA_RI = parseFloat(valsL.v1);
                 }
             }
@@ -963,6 +968,135 @@ function parseCCDData() {
     }
 }
 
+function parseTCCSData() {
+    const pasteBox = document.getElementById('tccs_paste_box');
+    const text = pasteBox.value;
+    if (!text.trim()) return;
+
+    let parsedSomething = false;
+    let resFlags = [];  // PI > 1.3
+    let redFlags = [];  // Reduced MV thresholds
+    let velFlags = [];  // MCA M1 PSV > 140
+    let velValues = {}; 
+
+    let lines = text.split('\n');
+
+    lines.forEach(line => {
+        if (line.length < 10) return;
+        
+        // 1. 抓取前 11 個字元判定血管名稱
+        let vNameRaw = line.substring(0, 11).trim();
+        let vBase = "";
+        
+        // 合併 M1-P 與 M1-D 歸類為 MCA M1
+        if (vNameRaw.includes("MCA M1")) vBase = "MCA M1";
+        else if (vNameRaw.includes("MCA M2")) vBase = "MCA M2";
+        else if (vNameRaw.includes("ACA")) vBase = "ACA";
+        else if (vNameRaw.includes("PCA P1")) vBase = "PCA P1";
+        else if (vNameRaw.includes("PCA P2")) vBase = "PCA P2";
+        else if (vNameRaw.includes("BA")) vBase = "BA";
+        else if (vNameRaw.includes("VA")) vBase = "VA";
+        else return; // 略過無關的表頭、ICA Siphon、Depth等行
+
+        // 2. 核心修正：利用字串索引擷取固定寬度的區塊 (完全無視中間的空缺與文字)
+        let r_psvStr = line.substring(18, 26);
+        let r_mvStr  = line.substring(32, 39);
+        let r_piStr  = line.substring(39, 47);
+
+        // 如果該行夠長，才擷取左側區塊
+        let l_psvStr = line.length > 59 ? line.substring(59, 67) : "";
+        let l_mvStr  = line.length > 74 ? line.substring(74, 82) : "";
+        let l_piStr  = line.length > 82 ? line.substring(82, 90) : "";
+
+        // 安全轉換浮點數函數
+        const getVal = str => {
+            let m = str.match(/\d+(\.\d+)?/);
+            return m ? parseFloat(m[0]) : 0;
+        };
+
+        let r_psv = getVal(r_psvStr);
+        let r_mv  = getVal(r_mvStr);
+        let r_pi  = getVal(r_piStr);
+
+        let l_psv = getVal(l_psvStr);
+        let l_mv  = getVal(l_mvStr);
+        let l_pi  = getVal(l_piStr);
+
+        // 3. 判斷 Reduced MV 的閾值條件函數
+        const checkReducedMV = (vessel, mv) => {
+            if (mv <= 0) return false;
+            if (vessel.includes("MCA") && mv < 50) return true;
+            if (vessel.includes("ACA") && mv < 40) return true;
+            if (vessel.includes("PCA") && mv < 30) return true;
+            if (vessel === "BA" && mv < 30) return true;
+            if (vessel.includes("VA") && mv < 20) return true;
+            return false;
+        };
+
+        // --- 處理右側 (Right) 數據 ---
+        let r_name = vBase === "BA" ? "BA" : "right " + vBase; // BA 獨立，無分左右
+        if (r_pi > 1.3 && !resFlags.includes(r_name)) resFlags.push(r_name);
+        if (checkReducedMV(vBase, r_mv) && !redFlags.includes(r_name)) redFlags.push(r_name);
+        if (r_psv > 140 && vBase === "MCA M1") {
+            if (!velFlags.includes(r_name)) velFlags.push(r_name);
+            // 若同一血管(例如M1-P和M1-D)有兩個大於140的數值，取最大值
+            velValues[r_name] = Math.max(velValues[r_name] || 0, r_psv);
+        }
+
+        // --- 處理左側 (Left) 數據 ---
+        // BA 通常只有單側數值，若為 BA 則略過處理左側
+        if (vBase !== "BA") {
+            let l_name = "left " + vBase;
+            if (l_pi > 1.3 && !resFlags.includes(l_name)) resFlags.push(l_name);
+            if (checkReducedMV(vBase, l_mv) && !redFlags.includes(l_name)) redFlags.push(l_name);
+            if (l_psv > 140 && vBase === "MCA M1") {
+                if (!velFlags.includes(l_name)) velFlags.push(l_name);
+                velValues[l_name] = Math.max(velValues[l_name] || 0, l_psv);
+            }
+        }
+    });
+
+    // 4. 動態展開屬性表單並勾選 UI
+    if (resFlags.length > 0 || redFlags.length > 0 || velFlags.length > 0) {
+        document.getElementById('chk_tccs_attr').checked = true;
+        document.getElementById('tccs_attr_area').classList.remove('hidden');
+    }
+
+    const applyChecks = (chkClass, flags, mainChkId, areaId) => {
+        let hasAny = false;
+        document.querySelectorAll(`.${chkClass}`).forEach(chk => {
+            chk.checked = false; // 先重置
+            if (flags.includes(chk.value)) {
+                chk.checked = true;
+                hasAny = true;
+                
+                // 若為 Velocity，連帶填入測到的 PSV
+                if (chkClass === 'tccs-chk-grid_vel') {
+                    let numInput = chk.closest('div').querySelector('.tccs-psv-grid_vel');
+                    numInput.classList.remove('hidden');
+                    if (velValues[chk.value]) numInput.value = velValues[chk.value];
+                }
+            }
+        });
+        document.getElementById(mainChkId).checked = hasAny;
+        if (hasAny) document.getElementById(areaId).classList.remove('hidden');
+        else document.getElementById(areaId).classList.add('hidden');
+    };
+
+    applyChecks('tccs-chk-grid_res', resFlags, 'chk_tccs_res', 'tccs_res_area');
+    applyChecks('tccs-chk-grid_red', redFlags, 'chk_tccs_red', 'tccs_red_area');
+    applyChecks('tccs-chk-grid_vel', velFlags, 'chk_tccs_vel', 'tccs_vel_area');
+
+    if (resFlags.length > 0 || redFlags.length > 0 || velFlags.length > 0) parsedSomething = true;
+
+    if (parsedSomething) {
+        updateReport();
+        setTimeout(() => { 
+            pasteBox.value = ''; 
+            pasteBox.placeholder = '✅ TCCS 異常指標解析完成！已精準篩選 PI, MV 及 PSV。'; 
+        }, 1200);
+    }
+}
         // ==========================================
         // 各模組報告生成邏輯
         // ==========================================
@@ -1049,31 +1183,46 @@ function parseCCDData() {
 
         function generateTCDReport(reportBox) {
             let finalStr = `[Midline/TCCS]:\n`;
-            const aRaw = document.getElementById('tcd_mid_l').value; const bRaw = document.getElementById('tcd_mid_r').value; const dRaw = document.getElementById('tcd_mid_d').value;
-            const a = parseFloat(aRaw); const b = parseFloat(bRaw); const d = parseFloat(dRaw);
-            let shiftStr = "___, ___ to ___";
-            if (!isNaN(a) && !isNaN(b)) { let shiftVal = (Math.abs(a - b) / 2).toFixed(2); if (a > b) shiftStr = `${shiftVal} cm, left to right`; else if (b > a) shiftStr = `${shiftVal} cm, right to left`; else shiftStr = "0 cm, no shift"; }
-            finalStr += `Midline measurement:\nLeft temporal bone to 3rd ventricle: ${aRaw || '___'} cm\nRight temporal bone to 3rd ventricle: ${bRaw || '___'} cm\nMidline shift: ${shiftStr}.\n`;
-            if (!isNaN(d)) { finalStr += `3rd ventricle diameter: ${(d < 0.6) ? `${d} cm < 0.6cm, no ventricular dilatation.` : `${d} cm >= 0.6cm, dilated 3rd ventricle, suspected hydrocephalus.`}\n`; }
-            finalStr += `\n`;
-            let tccsLines = []; let index = 1;
-            if (document.getElementById('chk_tccs_poor').checked) { const poorSide = document.querySelector('input[name="tccs_poor_side"]:checked').value; tccsLines.push(`${index}. Poor ${poorSide} temporal ${poorSide === 'bilateral' ? 'windows' : 'window'}.`); index++; }
-            if (document.getElementById('chk_tccs_vel').checked) {
-                let velItems = []; document.querySelectorAll('.tccs-chk-grid_vel:checked').forEach(chk => { velItems.push({ name: chk.value, psv: chk.closest('div').querySelector('.tccs-psv-grid_vel').value }); });
-                if (velItems.length > 0) {
-                    let bilateralBases = []; let rightBases = []; let leftBases = []; let otherBases = []; let processed = new Set();
-                    tccsBaseVessels.forEach(base => { let rItem = velItems.find(x => x.name === "right " + base); let lItem = velItems.find(x => x.name === "left " + base); if (rItem && lItem) { let psvStr = (rItem.psv || lItem.psv) ? ` (R/L PSV= ${rItem.psv || '___'}/${lItem.psv || '___'} cm/sec)` : ""; bilateralBases.push(base + "s" + psvStr); processed.add(rItem.name); processed.add(lItem.name); }});
-                    velItems.forEach(item => { if (processed.has(item.name)) return; let psvStr = item.psv ? ` (PSV= ${item.psv} cm/sec)` : ""; if (item.name.startsWith("right ")) rightBases.push(item.name.substring(6) + psvStr); else if (item.name.startsWith("left ")) leftBases.push(item.name.substring(5) + psvStr); else otherBases.push(item.name + psvStr); });
-                    let parts = []; if (bilateralBases.length > 0) parts.push("bilateral " + smartJoinList(bilateralBases)); if (rightBases.length > 0) parts.push("right " + smartJoinList(rightBases)); if (leftBases.length > 0) parts.push("left " + smartJoinList(leftBases)); if (otherBases.length > 0) parts.push(smartJoinList(otherBases));
-                    tccsLines.push(`${index}. High flow velocity in the ${smartJoinList(parts).replace(/ and bilateral /g, ", bilateral ").replace(/ and right /g, ", right ").replace(/ and left /g, ", left ")}, indicating stenosis.`); index++;
-                }
+            let hasContent = false;
+
+            if (document.getElementById('chk_midline').checked) {
+                hasContent = true;
+                const aRaw = document.getElementById('tcd_mid_l').value; const bRaw = document.getElementById('tcd_mid_r').value; const dRaw = document.getElementById('tcd_mid_d').value;
+                const a = parseFloat(aRaw); const b = parseFloat(bRaw); const d = parseFloat(dRaw);
+                let shiftStr = "___, ___ to ___";
+                if (!isNaN(a) && !isNaN(b)) { let shiftVal = (Math.abs(a - b) / 2).toFixed(2); if (a > b) shiftStr = `${shiftVal} cm, left to right`; else if (b > a) shiftStr = `${shiftVal} cm, right to left`; else shiftStr = "0 cm, no shift"; }
+                finalStr += `Midline measurement:\nLeft temporal bone to 3rd ventricle: ${aRaw || '___'} cm\nRight temporal bone to 3rd ventricle: ${bRaw || '___'} cm\nMidline shift: ${shiftStr}.\n`;
+                if (!isNaN(d)) { finalStr += `3rd ventricle diameter: ${(d < 0.6) ? `${d} cm < 0.6cm, no ventricular dilatation.` : `${d} cm >= 0.6cm, dilated 3rd ventricle, suspected hydrocephalus.`}\n`; }
+                finalStr += `\n`;
             }
-            if (document.getElementById('chk_tccs_res').checked) { const resList = Array.from(document.querySelectorAll('.tccs-chk-grid_res:checked')).map(c => c.value); if (resList.length > 0) { tccsLines.push(`${index}. Increased flow resistances in ${formatBilateralVessels(resList, true)}, indicating stenosis.`); index++; } }
-            if (document.getElementById('chk_tccs_red').checked) { if (document.getElementById('chk_tccs_red_gen').checked) { tccsLines.push(`${index}. Reduced mean flow velocities in most of the sampled arteries, probably indicating multifocal intracranial arterial stenosis.`); index++; } else { const redList = Array.from(document.querySelectorAll('.tccs-chk-grid_red:checked')).map(c => c.value); if (redList.length > 0) { tccsLines.push(`${index}. Reduced mean flow velocity in ${formatBilateralVessels(redList, true)}, indicating stenosis.`); index++; } } }
-            if (document.getElementById('chk_tccs_not').checked) { const notList = Array.from(document.querySelectorAll('.tccs-chk-grid_not:checked')).map(c => c.value); if (notList.length > 0) { let vStr = formatBilateralVessels(notList, true); tccsLines.push(`${index}. ${vStr.charAt(0).toUpperCase() + vStr.slice(1)} were not visualized.`); index++; } }
-            if (document.getElementById('chk_tccs_oa').checked) { tccsLines.push(`${index}. Normal flow direction in bilateral ophthalmic arteries.`); index++; }
-            if (tccsLines.length > 0) { finalStr += `Transcranial color-coded sonography (TCCS):\n` + tccsLines.join("\n"); }
-            reportBox.value = finalStr.trim();
+
+            if (document.getElementById('chk_tccs_attr').checked) {
+                hasContent = true;
+                let tccsLines = []; let index = 1;
+                if (document.getElementById('chk_tccs_poor').checked) { const poorSide = document.querySelector('input[name="tccs_poor_side"]:checked').value; tccsLines.push(`${index}. Poor ${poorSide} temporal ${poorSide === 'bilateral' ? 'windows' : 'window'}.`); index++; }
+                if (document.getElementById('chk_tccs_vel').checked) {
+                    let velItems = []; document.querySelectorAll('.tccs-chk-grid_vel:checked').forEach(chk => { velItems.push({ name: chk.value, psv: chk.closest('div').querySelector('.tccs-psv-grid_vel').value }); });
+                    if (velItems.length > 0) {
+                        let bilateralBases = []; let rightBases = []; let leftBases = []; let otherBases = []; let processed = new Set();
+                        tccsBaseVessels.forEach(base => { let rItem = velItems.find(x => x.name === "right " + base); let lItem = velItems.find(x => x.name === "left " + base); if (rItem && lItem) { let psvStr = (rItem.psv || lItem.psv) ? ` (R/L PSV= ${rItem.psv || '___'}/${lItem.psv || '___'} cm/sec)` : ""; bilateralBases.push(base + "s" + psvStr); processed.add(rItem.name); processed.add(lItem.name); }});
+                        velItems.forEach(item => { if (processed.has(item.name)) return; let psvStr = item.psv ? ` (PSV= ${item.psv} cm/sec)` : ""; if (item.name.startsWith("right ")) rightBases.push(item.name.substring(6) + psvStr); else if (item.name.startsWith("left ")) leftBases.push(item.name.substring(5) + psvStr); else otherBases.push(item.name + psvStr); });
+                        let parts = []; if (bilateralBases.length > 0) parts.push("bilateral " + smartJoinList(bilateralBases)); if (rightBases.length > 0) parts.push("right " + smartJoinList(rightBases)); if (leftBases.length > 0) parts.push("left " + smartJoinList(leftBases)); if (otherBases.length > 0) parts.push(smartJoinList(otherBases));
+                        tccsLines.push(`${index}. High flow velocity in the ${smartJoinList(parts).replace(/ and bilateral /g, ", bilateral ").replace(/ and right /g, ", right ").replace(/ and left /g, ", left ")}, indicating stenosis.`); index++;
+                    }
+                }
+                if (document.getElementById('chk_tccs_res').checked) { const resList = Array.from(document.querySelectorAll('.tccs-chk-grid_res:checked')).map(c => c.value); if (resList.length > 0) { tccsLines.push(`${index}. Increased flow resistances in ${formatBilateralVessels(resList, true)}, indicating stenosis.`); index++; } }
+                if (document.getElementById('chk_tccs_red').checked) { if (document.getElementById('chk_tccs_red_gen').checked) { tccsLines.push(`${index}. Reduced mean flow velocities in most of the sampled arteries, probably indicating multifocal intracranial arterial stenosis.`); index++; } else { const redList = Array.from(document.querySelectorAll('.tccs-chk-grid_red:checked')).map(c => c.value); if (redList.length > 0) { tccsLines.push(`${index}. Reduced mean flow velocity in ${formatBilateralVessels(redList, true)}, indicating stenosis.`); index++; } } }
+                if (document.getElementById('chk_tccs_not').checked) { const notList = Array.from(document.querySelectorAll('.tccs-chk-grid_not:checked')).map(c => c.value); if (notList.length > 0) { let vStr = formatBilateralVessels(notList, true); tccsLines.push(`${index}. ${vStr.charAt(0).toUpperCase() + vStr.slice(1)} were not visualized.`); index++; } }
+                if (document.getElementById('chk_tccs_oa').checked) { tccsLines.push(`${index}. Normal flow direction in bilateral ophthalmic arteries.`); index++; }
+                
+                if (tccsLines.length > 0) { finalStr += `Transcranial color-coded sonography (TCCS):\n` + tccsLines.join("\n"); }
+            }
+
+            if (!hasContent) {
+                reportBox.value = "[Midline/TCCS]:\n請先勾選左側的 Midline 或 TCCS 屬性來展開並產生報告。";
+            } else {
+                reportBox.value = finalStr.trim();
+            }
         }
 
         function generateNCVReport(reportBox) {
