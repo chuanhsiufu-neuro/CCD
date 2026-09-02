@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>神經科檢查報告系統 v11 </title>
+    <title>神經科檢查報告系統 v12 </title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .report-textarea { font-family: 'Courier New', Courier, monospace; min-height: 650px; white-space: pre-wrap; }
@@ -55,8 +55,8 @@
                     <label class="block font-bold text-gray-800 mb-2">CCD 報告屬性</label>
                     <div class="space-y-2 text-sm text-gray-700 font-medium">
                         <div class="grid grid-cols-3 gap-3 pb-2 border-b">
-                            <label class="flex items-center gap-1"><input type="radio" name="mainType" value="Normal" onchange="updateReport()" checked> Normal</label>
-                            <label class="flex items-center gap-1"><input type="radio" name="mainType" value="Abnormal" onchange="updateReport()"> Abnormal</label>
+                            <label class="flex items-center gap-1"><input type="radio" name="mainType" value="Normal" onchange="updateReport()"> Normal</label>
+                            <label class="flex items-center gap-1"><input type="radio" name="mainType" value="Abnormal" onchange="updateReport()"  checked> Abnormal</label>
                             <label class="flex items-center gap-1"><input type="checkbox" class="type-check" value="OA" onchange="updateReport()"> OA</label>
                         </div>
                         
@@ -141,6 +141,11 @@
                         </div>
                     </div>
                 </div>
+<!-- 新增：自動解析貼上區塊 -->
+<div class="input-card border-t-4 border-t-amber-400">
+    <label class="block font-bold text-gray-800 mb-2 border-b pb-1">Data Auto-Parser (支援新竹/生醫數據匯入)</label>
+    <textarea id="ccd_paste_box" rows="3" class="w-full border border-amber-300 p-2 rounded bg-amber-50 text-gray-600 placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-amber-400 text-xs font-mono" placeholder="請在此貼上完整表格，系統將自動解析 IMT, VA Dia, Flow 以及各血管 DR%..." oninput="parseCCDData()"></textarea>
+</div>
 
                 <div class="input-card border-t-4 border-t-orange-400">
                     <label class="block font-bold text-gray-800 mb-2 border-b pb-1">Basic Parameters</label>
@@ -151,6 +156,7 @@
                         <div>VA L (Dia)<input type="number" id="va_l" step="0.01" class="w-full border p-1 rounded" oninput="updateReport()"></div>
                         <div>R VA flow<input type="number" id="vaf_r" class="w-full border p-1 rounded" oninput="updateReport()"></div>
                         <div>L VA flow<input type="number" id="vaf_l" class="w-full border p-1 rounded" oninput="updateReport()"></div>
+
                     </div>
                 </div>
 
@@ -232,41 +238,42 @@
                 <div class="input-card border-t-4 border-t-slate-700">
                     <label class="block font-bold text-slate-800 mb-2 border-b pb-1 text-base">0. NCV Study Status</label>
                     <div class="flex gap-4 p-2 bg-slate-100 rounded">
-                        <label class="font-bold text-green-700"><input type="radio" name="ncv_global" value="normal" checked onchange="toggleNCVGlobal()"> Normal</label>
-                        <label class="font-bold text-red-700"><input type="radio" name="ncv_global" value="abnormal" onchange="toggleNCVGlobal()"> Abnormal</label>
+                        <label class="font-bold text-green-700"><input type="radio" name="ncv_global" value="normal" onchange="toggleNCVGlobal()"> Normal</label>
+                        <label class="font-bold text-red-700"><input type="radio" name="ncv_global" value="abnormal" checked onchange="toggleNCVGlobal()"> Abnormal</label>
                     </div>
                 </div>
 
-                <div id="ncv_abnormal_sections" class="hidden">
+                <div id="ncv_abnormal_sections">
                     <div class="input-card border-t-4 border-t-blue-500">
-                        <label class="font-bold text-blue-800 mb-2 block border-b pb-1">1. 上肢 (Upper Limb) - Findings</label>
-                        <div class="space-y-4">
+                        <label class="font-bold text-blue-800 mb-2 block border-b pb-1 flex items-center gap-2 cursor-pointer"><input type="checkbox" id="chk_up_limb" onchange="toggleModule('up_limb_opts', 'chk_up_limb')"> 1. 上肢 (Upper Limb) - Findings</label>
+                        <div id="up_limb_opts" class="hidden space-y-4 pl-2 border-l-2 border-blue-200 mt-2">
                             <div>
-                                <h4 class="font-bold text-red-600 bg-red-50 p-1 border-l-4 border-red-400 mb-2 text-sm">Motor</h4>
-                                <div id="ncv_up_motor" class="space-y-3"></div>
+                                <label class="font-bold text-red-600 bg-red-50 p-1 border-l-4 border-red-400 mb-2 text-sm flex items-center gap-2 cursor-pointer"><input type="checkbox" id="chk_up_motor" onchange="toggleModule('ncv_up_motor', 'chk_up_motor')"> Motor</label>
+                                <div id="ncv_up_motor" class="hidden space-y-3 pl-2 mt-2"></div>
                             </div>
                             <div>
-                                <h4 class="font-bold text-blue-600 bg-blue-50 p-1 border-l-4 border-blue-400 mb-2 text-sm">Sensory</h4>
-                                <div id="ncv_up_sensory" class="space-y-3"></div>
+                                <label class="font-bold text-blue-600 bg-blue-50 p-1 border-l-4 border-blue-400 mb-2 text-sm flex items-center gap-2 cursor-pointer"><input type="checkbox" id="chk_up_sensory" onchange="toggleModule('ncv_up_sensory', 'chk_up_sensory')"> Sensory</label>
+                                <div id="ncv_up_sensory" class="hidden space-y-3 pl-2 mt-2"></div>
                             </div>
                         </div>
                     </div>
 
                     <div class="input-card border-t-4 border-t-green-500">
-                        <label class="font-bold text-green-800 mb-2 block border-b pb-1">2. 下肢 (Lower Limb) - Findings</label>
-                        <div class="space-y-4">
+                        <label class="font-bold text-green-800 mb-2 block border-b pb-1 flex items-center gap-2 cursor-pointer"><input type="checkbox" id="chk_low_limb" onchange="toggleModule('low_limb_opts', 'chk_low_limb')"> 2. 下肢 (Lower Limb) - Findings</label>
+                        <div id="low_limb_opts" class="hidden space-y-4 pl-2 border-l-2 border-green-200 mt-2">
                             <div>
-                                <h4 class="font-bold text-red-600 bg-red-50 p-1 border-l-4 border-red-400 mb-2 text-sm">Motor</h4>
-                                <div id="ncv_low_motor" class="space-y-3"></div>
+                                <label class="font-bold text-red-600 bg-red-50 p-1 border-l-4 border-red-400 mb-2 text-sm flex items-center gap-2 cursor-pointer"><input type="checkbox" id="chk_low_motor" onchange="toggleModule('ncv_low_motor', 'chk_low_motor')"> Motor</label>
+                                <div id="ncv_low_motor" class="hidden space-y-3 pl-2 mt-2"></div>
                             </div>
                             <div>
-                                <h4 class="font-bold text-blue-600 bg-blue-50 p-1 border-l-4 border-blue-400 mb-2 text-sm">Sensory</h4>
-                                <div id="ncv_low_sensory" class="space-y-3"></div>
+                                <label class="font-bold text-blue-600 bg-blue-50 p-1 border-l-4 border-blue-400 mb-2 text-sm flex items-center gap-2 cursor-pointer"><input type="checkbox" id="chk_low_sensory" onchange="toggleModule('ncv_low_sensory', 'chk_low_sensory')"> Sensory</label>
+                                <div id="ncv_low_sensory" class="hidden space-y-3 pl-2 mt-2"></div>
                             </div>
                         </div>
                     </div>
                 </div>
 
+                <!-- 以下 3. F-wave & H-reflex 與 4. NCV Conclusions 維持原樣 -->
                 <div class="input-card border-t-4 border-t-purple-500">
                     <label class="block font-bold text-purple-800 mb-2 border-b pb-1 text-base">3. F-wave & H-reflex</label>
                     <div class="space-y-4 text-sm">
@@ -644,31 +651,43 @@
         }
 
         function formatBilateralVessels(names, isTCCS = false) {
-            if (names.length === 0) return "___";
-            const baseNames = isTCCS ? ["MCA M1", "MCA M2", "ACA", "PCA P1", "PCA P2", "VA"] : ["CCA", "carotid bulb", "ICA", "ECA"];
-            let bilateralBases = []; let rightBases = []; let leftBases = []; let otherBases = []; let processedNames = new Set();
+    if (names.length === 0) return "___";
+    const baseNames = isTCCS ? ["MCA M1", "MCA M2", "ACA", "PCA P1", "PCA P2", "VA"] : ["CCA", "carotid bulb", "ICA", "ECA"];
+    let bilateralBases = []; let rightBases = []; let leftBases = []; let otherBases = []; let processedNames = new Set();
 
-            baseNames.forEach(base => {
-                if (names.includes("right " + base) && names.includes("left " + base)) {
-                    bilateralBases.push(base === "carotid bulb" ? "carotid bulbs" : base + "s");
-                    processedNames.add("right " + base); processedNames.add("left " + base);
-                }
-            });
-            names.forEach(name => {
-                if (processedNames.has(name)) return;
-                if (name.startsWith("right ")) rightBases.push(name.substring(6));
-                else if (name.startsWith("left ")) leftBases.push(name.substring(5));
-                else otherBases.push(name);
-            });
-
-            let finalParts = [];
-            if (bilateralBases.length > 0) finalParts.push("bilateral " + smartJoinList(bilateralBases));
-            if (rightBases.length > 0) finalParts.push("right " + smartJoinList(rightBases));
-            if (leftBases.length > 0) finalParts.push("left " + smartJoinList(leftBases));
-            if (otherBases.length > 0) finalParts.push(smartJoinList(otherBases));
-
-            return smartJoinList(finalParts).replace(/ and bilateral /g, ", bilateral ").replace(/ and right /g, ", right ").replace(/ and left /g, ", left ");
+    baseNames.forEach(base => {
+        if (names.includes("right " + base) && names.includes("left " + base)) {
+            bilateralBases.push(base === "carotid bulb" ? "carotid bulbs" : base + "s");
+            processedNames.add("right " + base); processedNames.add("left " + base);
         }
+    });
+    
+    names.forEach(name => {
+        if (processedNames.has(name)) return;
+        if (name.startsWith("right ")) rightBases.push(name.substring(6));
+        else if (name.startsWith("left ")) leftBases.push(name.substring(5));
+        else otherBases.push(name);
+    });
+
+    let flatList = [];
+    
+    if (bilateralBases.length > 0) {
+        flatList.push("bilateral " + bilateralBases[0]);
+        for (let i = 1; i < bilateralBases.length; i++) flatList.push(bilateralBases[i]);
+    }
+    if (rightBases.length > 0) {
+        flatList.push("right " + rightBases[0]);
+        for (let i = 1; i < rightBases.length; i++) flatList.push(rightBases[i]);
+    }
+    if (leftBases.length > 0) {
+        flatList.push("left " + leftBases[0]);
+        for (let i = 1; i < leftBases.length; i++) flatList.push(leftBases[i]);
+    }
+    flatList.push(...otherBases);
+
+    // 利用 smartJoinList 在最後一項之前加入 "and"
+    return smartJoinList(flatList);
+}
 
         function joinAndHelper(arr) {
             if (!arr || arr.length === 0) return "";
@@ -770,6 +789,180 @@
             else if (currentTab === 'VEP') generateVEPReport(reportBox);
         }
 
+function parseCCDData() {
+    const pasteBox = document.getElementById('ccd_paste_box');
+    const text = pasteBox.value;
+    if (!text.trim()) return;
+
+    let parsedSomething = false;
+
+    // 1. 嘗試解析【生醫版 VA Flow】(不會觸發新竹版的表格解析)
+    const rightMatch = text.match(/Right\s+([0-9.]+)\s+([0-9.]+)/i);
+    const leftMatch = text.match(/Left\s+([0-9.]+)\s+([0-9.]+)/i);
+    
+    if (rightMatch && !text.includes('ICA')) { 
+        document.getElementById('va_r').value = rightMatch[1];
+        document.getElementById('vaf_r').value = rightMatch[2];
+        parsedSomething = true;
+    }
+    if (leftMatch && !text.includes('ICA')) {
+        document.getElementById('va_l').value = leftMatch[1];
+        document.getElementById('vaf_l').value = leftMatch[2];
+        parsedSomething = true;
+    }
+
+    // 2. 嘗試解析【新竹版 完整表格】
+    if (text.includes('ICA') && text.includes('Diam') && text.includes('Flow')) {
+        let data = {
+            R: { ICA_DR: '', ECA_DR: '', BIF_DR: '', CCA_DR: '', CCA_IMT: '', VA_DIA: '', VA_FLOW: '', ICA_RI: 0, ECA_RI: 0, CCA_RI: 0 },
+            L: { ICA_DR: '', ECA_DR: '', BIF_DR: '', CCA_DR: '', CCA_IMT: '', VA_DIA: '', VA_FLOW: '', ICA_RI: 0, ECA_RI: 0, CCA_RI: 0 },
+            _foundIMT: false // 新增：用來追蹤是否剛經過 IMT 行
+        };
+
+        let currentSec = '';
+        let rHeaders = {}, lHeaders = {};
+
+        text.split('\n').forEach(line => {
+            if (!line.trim()) return;
+            
+            // 動態尋找每一行的第二個關鍵字作為精準切分點
+            let words = line.trim().split(/\s+/);
+            let lineKey = words[0];
+            let pR = line, pL = "";
+            let keyIndices = [];
+            let searchIdx = 0;
+            
+            while ((searchIdx = line.indexOf(lineKey, searchIdx)) !== -1) {
+                keyIndices.push(searchIdx);
+                searchIdx += lineKey.length;
+            }
+
+            if (keyIndices.length >= 2) {
+                let splitPoint = keyIndices[1];
+                if (splitPoint < line.length * 0.3) splitPoint = Math.floor(line.length / 2);
+                pR = line.substring(0, splitPoint);
+                pL = line.substring(splitPoint);
+            } else {
+                pR = line.substring(0, Math.floor(line.length / 2));
+                pL = line.substring(Math.floor(line.length / 2));
+            }
+
+            if (line.includes('ICA') && line.includes('ECA')) { 
+                currentSec = 'ICA_ECA'; 
+                rHeaders.ICA = pR.indexOf('ICA'); rHeaders.ECA = pR.indexOf('ECA'); 
+                lHeaders.ICA = pL.indexOf('ICA'); lHeaders.ECA = pL.indexOf('ECA'); 
+            }
+            else if (line.includes('BIF')) { currentSec = 'BIF'; }
+            else if (line.includes('CCA') && line.includes('VA')) { 
+                currentSec = 'CCA_VA'; 
+                rHeaders.CCA = pR.indexOf('CCA'); rHeaders.VA = pR.indexOf('VA'); 
+                lHeaders.CCA = pL.indexOf('CCA'); lHeaders.VA = pL.indexOf('VA'); 
+            }
+
+            const extractDual = (part, h1, h2) => {
+                let res = { v1: '', v2: '' };
+                let matches = [...part.matchAll(/(\d+(\.\d+)?)/g)];
+                if (matches.length >= 2) { res.v1 = matches[0][0]; res.v2 = matches[1][0]; } 
+                else if (matches.length === 1) {
+                    let idx = matches[0].index;
+                    if (Math.abs(idx - h1) <= Math.abs(idx - h2)) res.v1 = matches[0][0];
+                    else res.v2 = matches[0][0];
+                }
+                return res;
+            };
+
+            const extractSingle = (part) => { let m = part.match(/(\d+(\.\d+)?)/); return m ? m[0] : ''; };
+
+            if (currentSec === 'ICA_ECA') {
+                if (line.includes('DR')) {
+                    let valsR = extractDual(pR, rHeaders.ICA, rHeaders.ECA); let valsL = extractDual(pL, lHeaders.ICA, lHeaders.ECA);
+                    if(valsR.v1) data.R.ICA_DR = valsR.v1; if(valsR.v2) data.R.ECA_DR = valsR.v2;
+                    if(valsL.v1) data.L.ICA_DR = valsL.v1; if(valsL.v2) data.L.ECA_DR = valsL.v2;
+                }
+                if (line.includes('RI')) {
+                    let valsR = extractDual(pR, rHeaders.ICA, rHeaders.ECA); let valsL = extractDual(pL, lHeaders.ICA, lHeaders.ECA);
+                    if(valsR.v1) data.R.ICA_RI = parseFloat(valsR.v1); if(valsR.v2) data.R.ECA_RI = parseFloat(valsR.v2);
+                    if(valsL.v1) data.L.ICA_RI = parseFloat(valsL.v1); if(valsL.v2) data.L.ECA_RI = parseFloat(valsL.v2);
+                }
+            }
+            if (currentSec === 'BIF' && line.includes('DR')) {
+                let rM = extractSingle(pR); if(rM) data.R.BIF_DR = rM;
+                let lM = extractSingle(pL); if(lM) data.L.BIF_DR = lM;
+            }
+            if (currentSec === 'CCA_VA') {
+                if (line.includes('Diam')) {
+                    let valsR = extractDual(pR, rHeaders.CCA, rHeaders.VA); let valsL = extractDual(pL, lHeaders.CCA, lHeaders.VA);
+                    if(valsR.v2) data.R.VA_DIA = valsR.v2; else if(valsR.v1) data.R.VA_DIA = valsR.v1;
+                    if(valsL.v2) data.L.VA_DIA = valsL.v2; else if(valsL.v1) data.L.VA_DIA = valsL.v1;
+                }
+                if (line.includes('Flow')) {
+                    let valsR = extractDual(pR, rHeaders.CCA, rHeaders.VA); let valsL = extractDual(pL, lHeaders.CCA, lHeaders.VA);
+                    if(valsR.v2) data.R.VA_FLOW = valsR.v2; else if(valsR.v1) data.R.VA_FLOW = valsR.v1;
+                    if(valsL.v2) data.L.VA_FLOW = valsL.v2; else if(valsL.v1) data.L.VA_FLOW = valsL.v1;
+                }
+                if (line.includes('IMT')) {
+                    // IMT 每側只有一個數值，直接抓取唯一數字，無視標題對齊位置
+                    let rM = extractSingle(pR); if (rM) data.R.CCA_IMT = rM;
+                    let lM = extractSingle(pL); if (lM) data.L.CCA_IMT = lM;
+                    data._foundIMT = true; 
+                }
+                else if (line.includes('AR') && data._foundIMT && !data.R.CCA_DR && !data.L.CCA_DR) { 
+                    // 同理，CCA DR 也直接抓取該行唯一數字
+                    let rM = extractSingle(pR); if (rM) data.R.CCA_DR = rM;
+                    let lM = extractSingle(pL); if (lM) data.L.CCA_DR = lM;
+                    data._foundIMT = false; 
+                }
+                if (line.includes('RI')) {
+                    let valsR = extractDual(pR, rHeaders.CCA, rHeaders.VA); let valsL = extractDual(pL, lHeaders.CCA, lHeaders.VA);
+                    if(valsR.v1) data.R.CCA_RI = parseFloat(valsR.v1); if(valsL.v1) data.L.CCA_RI = parseFloat(valsL.v1);
+                }
+            }
+        });
+
+        const setVal = (id, val) => { if (val) document.getElementById(id).value = val; };
+        setVal('imt_r', data.R.CCA_IMT); setVal('imt_l', data.L.CCA_IMT);
+        setVal('va_r', data.R.VA_DIA); setVal('va_l', data.L.VA_DIA);
+        setVal('vaf_r', data.R.VA_FLOW); setVal('vaf_l', data.L.VA_FLOW);
+
+        const setDr = (vessel, val) => {
+            if (!val) return;
+            const sel = document.querySelector(`.v-sel[data-v="${vessel}"]`);
+            if (sel) sel.closest('.vessel-item-container').querySelector('.v-dr').value = val;
+        };
+        
+        setDr("right CCA", data.R.CCA_DR); setDr("left CCA", data.L.CCA_DR);
+        setDr("right carotid bulb", data.R.BIF_DR); setDr("left carotid bulb", data.L.BIF_DR);
+        setDr("right ICA", data.R.ICA_DR); setDr("left ICA", data.L.ICA_DR);
+        setDr("right ECA", data.R.ECA_DR); setDr("left ECA", data.L.ECA_DR);
+
+        let resFlags = {
+            "right CCA": data.R.CCA_RI > 0.8,
+            "left CCA": data.L.CCA_RI > 0.8,
+            "right ICA": data.R.ICA_RI > 0.7,
+            "left ICA": data.L.ICA_RI > 0.7,
+            "right ECA": data.R.ECA_RI > 0.9,
+            "left ECA": data.L.ECA_RI > 0.9
+        };
+
+        let hasRes = false;
+        document.querySelectorAll('.res-check').forEach(chk => {
+            chk.checked = false; 
+            if (resFlags[chk.value]) { chk.checked = true; hasRes = true; }
+        });
+
+        document.getElementById('check_res').checked = hasRes;
+        if (hasRes) document.getElementById('resVesselArea').classList.remove('hidden');
+        else document.getElementById('resVesselArea').classList.add('hidden');
+
+        parsedSomething = true;
+    }
+
+    if (parsedSomething) {
+        updateReport();
+        setTimeout(() => { pasteBox.value = ''; pasteBox.placeholder = '✅ 數據與 RI 判斷已全數匯入完成！'; }, 1200);
+    }
+}
+
         // ==========================================
         // 各模組報告生成邏輯
         // ==========================================
@@ -810,11 +1003,17 @@
 
             if (hasDR && mainType === 'Abnormal') {
                 let drLines = [];
-                if (Object.keys(drValues.right).length > 0) drLines.push(`R-ICA ${drValues.right['ICA']||'--'}% Bulb ${drValues.right['Bulb']||'--'}% CCA ${drValues.right['CCA']||'--'}% ECA ${drValues.right['ECA']||'--'}%`);
-                if (Object.keys(drValues.left).length > 0) drLines.push(`L-ICA ${drValues.left['ICA']||'--'}% Bulb ${drValues.left['Bulb']||'--'}% CCA ${drValues.left['CCA']||'--'}% ECA ${drValues.left['ECA']||'--'}%`);
+                // 移除條件判斷，強制左右都輸出，沒有值的血管會自動顯示為 --%
+                drLines.push(`R-ICA ${drValues.right['ICA']||'--'}% Bulb ${drValues.right['Bulb']||'--'}% CCA ${drValues.right['CCA']||'--'}% ECA ${drValues.right['ECA']||'--'}%`);
+                drLines.push(`L-ICA ${drValues.left['ICA']||'--'}% Bulb ${drValues.left['Bulb']||'--'}% CCA ${drValues.left['CCA']||'--'}% ECA ${drValues.left['ECA']||'--'}%`);
+                
                 if (atheroStr) atheroStr += "\n" + drLines.join("\n"); else atheroStr = "Atherosclerosis with diameter reduction:\n" + drLines.join("\n");
             }
-            if (atheroStr) conclusions.push(atheroStr); else if (mainType === 'Normal') conclusions.push(`The results of the carotid arteries were within normal limits${hemoPhrase}.`);
+            if (atheroStr) {
+    conclusions.push(atheroStr);
+} else if (mainType === 'Normal' || (plaqueVessels.length === 0 && severeVessels.length === 0 && !hasDR)) {
+    conclusions.push(`The results of the carotid arteries were within normal limits${hemoPhrase}.`);
+}
 
             reportText += `- ${resText}\n\nVertebral artery:\n- VA Diameter (R/L): ${vaR}/${vaL} ${vaUnit}.\n`;
             if (mainType === 'Abnormal' && vafR < 40) reportText += `- Reduced flow amount in the right VA. (${vafR} < 40ml/min)\n`;
@@ -880,9 +1079,28 @@
         function generateNCVReport(reportBox) {
             let finalStr = `[NCV]:\n`;
             const globalStatus = document.querySelector('input[name="ncv_global"]:checked').value;
+            
+            // F-wave & H-reflex 狀態前置讀取
+            let fwChecked = document.getElementById('chk_fw').checked;
+            let hrChecked = document.getElementById('chk_hr').checked;
+            let fwNorm = fwChecked && document.querySelector('input[name="fw_type"]:checked').value === 'normal';
+            let hrNorm = hrChecked && document.querySelector('input[name="hr_type"]:checked').value === 'normal';
+
+            let focalSlowingConclusionLines = []; 
 
             if (globalStatus === 'normal') {
-                finalStr += `The results of the NCV study were within normal limits.\n\n`;
+                // 智慧合併 Normal 句型
+                let normalStudies = ["NCV"];
+                if (fwChecked && fwNorm) normalStudies.push("F-wave");
+                if (hrChecked && hrNorm) normalStudies.push("H-reflex");
+
+                if (normalStudies.length === 1) {
+                    finalStr += `The results of the NCV study were within normal limits.\n\n`;
+                } else if (normalStudies.length === 2) {
+                    finalStr += `The results of the ${normalStudies[0]} and ${normalStudies[1]} studies were within normal limits.\n\n`;
+                } else if (normalStudies.length === 3) {
+                    finalStr += `The results of the NCV, F-wave and H-reflex studies were within normal limits.\n\n`;
+                }
             } else {
                 finalStr += `The results of the NCV study showed:\n`;
 
@@ -901,7 +1119,6 @@
 
                 let motorLines = []; let sensoryLines = [];
                 let motorMap = {}; let sensoryMap = {};
-                let focalSlowingConclusionLines = []; // 特殊抽離
                 
                 document.querySelectorAll('.ncv-chk:checked').forEach(chk => {
                     let n = chk.dataset.n; let s = chk.dataset.s; let f = chk.dataset.f; let t = chk.dataset.t;
@@ -910,7 +1127,7 @@
                         let loc = n === 'median' ? 'at wrist' : 'across the elbow';
                         let noun = s === 'bilateral' ? 'nerves' : 'nerve';
                         focalSlowingConclusionLines.push(`Focal slowing of motor conduction velocity in ${s} ${n} ${noun} ${loc}.`);
-                        return; // 跳過一般 finding 的迴圈
+                        return; 
                     }
 
                     let targetMap = t === 'motor' ? motorMap : sensoryMap;
@@ -943,18 +1160,20 @@
                 finalStr += "\n";
             }
 
-            // F-wave & H-reflex 邏輯
-            if (document.getElementById('chk_fw').checked || document.getElementById('chk_hr').checked) {
-                let fwChecked = document.getElementById('chk_fw').checked; let hrChecked = document.getElementById('chk_hr').checked;
-                let fwNorm = fwChecked && document.querySelector('input[name="fw_type"]:checked').value === 'normal';
-                let hrNorm = hrChecked && document.querySelector('input[name="hr_type"]:checked').value === 'normal';
+            // F-wave & H-reflex 邏輯 (跳過已在頂部合併的 normal 句子)
+            if (fwChecked || hrChecked) {
+                let fwAlreadyPrinted = (globalStatus === 'normal' && fwChecked && fwNorm);
+                let hrAlreadyPrinted = (globalStatus === 'normal' && hrChecked && hrNorm);
 
                 if (fwChecked && hrChecked && fwNorm && hrNorm) {
-                    finalStr += `The results of F-wave and H-reflex studies were within normal limits.\n\n`;
+                    if (!fwAlreadyPrinted && !hrAlreadyPrinted) {
+                        finalStr += `The results of F-wave and H-reflex studies were within normal limits.\n\n`;
+                    }
                 } else {
                     if (fwChecked) {
-                        if (fwNorm) finalStr += `The results of F-wave study were within normal limits.\n`;
-                        else {
+                        if (fwNorm) {
+                            if (!fwAlreadyPrinted) finalStr += `The results of F-wave study were within normal limits.\n`;
+                        } else {
                             function getFWNerves(className) {
                                 let resList = [];
                                 fwNerves.forEach(n => {
@@ -984,8 +1203,9 @@
                     }
 
                     if (hrChecked) {
-                        if (hrNorm) finalStr += `The results of H-reflex study were within normal limits.\n`;
-                        else {
+                        if (hrNorm) {
+                            if (!hrAlreadyPrinted) finalStr += `The results of H-reflex study were within normal limits.\n`;
+                        } else {
                             let hrAbsR = document.getElementById('hr_abs_r').checked; let hrAbsL = document.getElementById('hr_abs_l').checked; let hrAbsB = document.getElementById('hr_abs_b').checked;
                             let hrLatR = document.getElementById('hr_lat_r').checked; let hrLatL = document.getElementById('hr_lat_l').checked; let hrLatB = document.getElementById('hr_lat_b').checked;
                             
@@ -1005,8 +1225,6 @@
             // Conclusion
             let conLines = [];
 
-            // 把前面暫存的 focalSlowingConclusionLines 放進來
-            // 因為這是我們把 Focal Slowing 獨立拉到 Conclusion 的邏輯
             if(typeof focalSlowingConclusionLines !== 'undefined' && focalSlowingConclusionLines.length > 0) {
                 conLines.push(...focalSlowingConclusionLines);
             }
@@ -1162,7 +1380,7 @@ function generateVEPReport(reportBox) {
             const clean = raw.replace(/^\[.*?\]:\s*/gm, ""); const temp = document.createElement('textarea'); temp.value = clean.trim(); document.body.appendChild(temp); temp.select(); document.execCommand('copy'); document.body.removeChild(temp); alert("報告複製成功！(識別標籤已自動隱藏)");
         }
         
-        openTab('SSEP'); // 以 SSEP 做為起始畫面，方便檢視更新效果
+        openTab('CCD'); // 以 CCD 做為起始畫面，方便檢視更新效果
     </script>
 </body>
 </html>
