@@ -1101,84 +1101,204 @@ function parseTCCSData() {
         // 各模組報告生成邏輯
         // ==========================================
         function generateCCDReport(reportBox) {
-            const loc = document.querySelector('input[name="loc"]:checked').value; const vaUnit = (loc === '生醫') ? 'cm' : 'mm'; const mainType = document.querySelector('input[name="mainType"]:checked').value;
-            const isOA = document.querySelector('input[value="OA"]').checked; const isSTA = document.getElementById('check_sta').checked; const isRes = document.getElementById('check_res').checked; const isStent = document.getElementById('check_stent').checked; const isSteal = document.getElementById('check_steal').checked;
-            const imtR = document.getElementById('imt_r').value || "0.00"; const imtL = document.getElementById('imt_l').value || "0.00"; const vaR = document.getElementById('va_r').value || "0.00"; const vaL = document.getElementById('va_l').value || "0.00"; const vafR = parseFloat(document.getElementById('vaf_r').value) || 0; const vafL = parseFloat(document.getElementById('vaf_l').value) || 0; const totalFlow = (vafR + vafL).toFixed(1);
-            let resText = "Normal PSV and EDV in bilateral CCAs, ICAs and ECAs."; let hemoPhrase = " without significant hemodynamic changes";
+            const loc = document.querySelector('input[name="loc"]:checked').value; 
+            const vaUnit = (loc === '生醫') ? 'cm' : 'mm'; 
+            const mainType = document.querySelector('input[name="mainType"]:checked').value;
+            const isOA = document.querySelector('input[value="OA"]').checked; 
+            const isSTA = document.getElementById('check_sta').checked; 
+            const isRes = document.getElementById('check_res').checked; 
+            const isStent = document.getElementById('check_stent').checked; 
+            const isSteal = document.getElementById('check_steal').checked;
             
-            if (isRes) { hemoPhrase = ""; if (document.getElementById('res_gen').checked) resText = "Generalized increased flow resistance."; else { const resVessels = Array.from(document.querySelectorAll('.res-check:checked')).map(c => c.value); resText = resVessels.length > 0 ? `Increased flow resistance in ${formatBilateralVessels(resVessels)}.` : "Increased flow resistance."; } }
+            const imtR = document.getElementById('imt_r').value || "0.00"; 
+            const imtL = document.getElementById('imt_l').value || "0.00"; 
+            const vaR = document.getElementById('va_r').value || "0.00"; 
+            const vaL = document.getElementById('va_l').value || "0.00"; 
+            const vafR = parseFloat(document.getElementById('vaf_r').value) || 0; 
+            const vafL = parseFloat(document.getElementById('vaf_l').value) || 0; 
+            const totalFlow = (vafR + vafL).toFixed(1);
+            
+            let resText = "Normal PSV and EDV in bilateral CCAs, ICAs and ECAs."; 
+            let hemoPhrase = " without significant hemodynamic changes";
+            
+            if (isRes) { 
+                hemoPhrase = ""; 
+                if (document.getElementById('res_gen').checked) {
+                    resText = "Generalized increased flow resistance."; 
+                } else { 
+                    const resVessels = Array.from(document.querySelectorAll('.res-check:checked')).map(c => c.value); 
+                    resText = resVessels.length > 0 ? `Increased flow resistance in ${formatBilateralVessels(resVessels)}.` : "Increased flow resistance."; 
+                } 
+            }
             
             let plaqueVessels = []; let severeVessels = []; let hasDR = false; let drValues = { right: {}, left: {} };
 
             document.querySelectorAll('.v-sel').forEach(sel => {
-                const container = sel.closest('.vessel-item-container'); const vName = sel.dataset.v; 
-                const drInput = container.querySelector('.v-dr').value; const psvInput = container.querySelector('.v-psv'); const edvInput = container.querySelector('.v-edv'); const psvEdvBox = container.querySelector('.psv-edv-box');
+                const container = sel.closest('.vessel-item-container'); 
+                const vName = sel.dataset.v; 
+                const drInput = container.querySelector('.v-dr').value; 
+                const psvInput = container.querySelector('.v-psv'); 
+                const edvInput = container.querySelector('.v-edv'); 
+                const psvEdvBox = container.querySelector('.psv-edv-box');
                 let isSevere = false; let degree = sel.value;
+                
                 if (drInput) {
-                    hasDR = true; let drNum = parseFloat(drInput); let side = vName.includes('right') ? 'right' : 'left'; let part = vName.replace('right ', '').replace('left ', '').replace('carotid bulb', 'Bulb').replace('ICA', 'ICA').replace('ECA', 'ECA').replace('CCA', 'CCA');
+                    hasDR = true; 
+                    let drNum = parseFloat(drInput); 
+                    let side = vName.includes('right') ? 'right' : 'left'; 
+                    let part = vName.replace('right ', '').replace('left ', '').replace('carotid bulb', 'Bulb').replace('ICA', 'ICA').replace('ECA', 'ECA').replace('CCA', 'CCA');
                     drValues[side][part] = drInput;
                     if (drNum > 50 && !vName.includes('bulb')) isSevere = true;
-                    else if (drNum >= 30) degree = "30-50%"; else if (drNum >= 10) degree = "10-30%"; else degree = "<10%";
-                } else { if (sel.value === ">50%") isSevere = true; }
+                    else if (drNum >= 30) degree = "30-50%"; 
+                    else if (drNum >= 10) degree = "10-30%"; 
+                    else degree = "<10%";
+                } else { 
+                    if (sel.value === ">50%") isSevere = true; 
+                }
 
                 if (isSevere) { 
-                    if (vName.includes('ICA')) { psvEdvBox.classList.remove('hidden'); severeVessels.push({ name: vName, psv: psvInput.value, edv: edvInput.value }); } 
-                    else { psvEdvBox.classList.add('hidden'); severeVessels.push({ name: vName }); }
-                } else { psvEdvBox.classList.add('hidden'); if (degree !== "Normal") plaqueVessels.push({ name: vName, degree: degree }); }
+                    if (vName.includes('ICA')) { 
+                        psvEdvBox.classList.remove('hidden'); 
+                        severeVessels.push({ name: vName, psv: psvInput.value, edv: edvInput.value }); 
+                    } else { 
+                        psvEdvBox.classList.add('hidden'); 
+                        severeVessels.push({ name: vName }); 
+                    }
+                } else { 
+                    psvEdvBox.classList.add('hidden'); 
+                    if (degree !== "Normal") plaqueVessels.push({ name: vName, degree: degree }); 
+                }
             });
 
-            let conclusions = []; let reportText = `[頸動脈超音波][${mainType}][${loc}]:\nCarotid artery:\n- CCA intima-media thickness (R/L): ${imtR}/${imtL} mm.\n`;
+            let conclusions = []; 
+            let reportText = `[頸動脈超音波][${mainType}][${loc}]:\nCarotid artery:\n- CCA intima-media thickness (R/L): ${imtR}/${imtL} mm.\n`;
             let atheroStr = "";
+            
             if (mainType === 'Abnormal' && plaqueVessels.length > 0) {
-                let vText = formatBilateralVessels(plaqueVessels.map(v => v.name)); reportText += `- Homogenous atherosclerotic changes with diameter reduction in ${vText}.\n`;
-                let severity = "mild"; const degs = plaqueVessels.map(v => v.degree); if (degs.some(d => d==='30-50%') && degs.some(d => d==='<10%' || d==='10-30%')) severity = "mild to moderate"; else if (degs.every(d => d==='30-50%')) severity = "moderate"; 
+                let vText = formatBilateralVessels(plaqueVessels.map(v => v.name)); 
+                reportText += `- Homogenous atherosclerotic changes with diameter reduction in ${vText}.\n`;
+                let severity = "mild"; 
+                const degs = plaqueVessels.map(v => v.degree); 
+                if (degs.some(d => d==='30-50%') && degs.some(d => d==='<10%' || d==='10-30%')) severity = "mild to moderate"; 
+                else if (degs.every(d => d==='30-50%')) severity = "moderate"; 
                 atheroStr = `${severity.charAt(0).toUpperCase() + severity.slice(1)} atherosclerosis in ${vText}${hemoPhrase}.`;
             }
 
             if (hasDR && mainType === 'Abnormal') {
                 let drLines = [];
-                // 移除條件判斷，強制左右都輸出，沒有值的血管會自動顯示為 --%
                 drLines.push(`R-ICA ${drValues.right['ICA']||'--'}% Bulb ${drValues.right['Bulb']||'--'}% CCA ${drValues.right['CCA']||'--'}% ECA ${drValues.right['ECA']||'--'}%`);
                 drLines.push(`L-ICA ${drValues.left['ICA']||'--'}% Bulb ${drValues.left['Bulb']||'--'}% CCA ${drValues.left['CCA']||'--'}% ECA ${drValues.left['ECA']||'--'}%`);
-                
-                if (atheroStr) atheroStr += "\n" + drLines.join("\n"); else atheroStr = "Atherosclerosis with diameter reduction:\n" + drLines.join("\n");
+                if (atheroStr) atheroStr += "\n" + drLines.join("\n"); 
+                else atheroStr = "Atherosclerosis with diameter reduction:\n" + drLines.join("\n");
             }
+            
             if (atheroStr) {
-    conclusions.push(atheroStr);
-} else if (mainType === 'Normal' || (plaqueVessels.length === 0 && severeVessels.length === 0 && !hasDR)) {
-    conclusions.push(`The results of the carotid arteries were within normal limits${hemoPhrase}.`);
-}
+                conclusions.push(atheroStr);
+            } else if (mainType === 'Normal' || (plaqueVessels.length === 0 && severeVessels.length === 0 && !hasDR)) {
+                conclusions.push(`The results of the carotid arteries were within normal limits${hemoPhrase}.`);
+            }
 
             reportText += `- ${resText}\n\nVertebral artery:\n- VA Diameter (R/L): ${vaR}/${vaL} ${vaUnit}.\n`;
             if (mainType === 'Abnormal' && vafR < 40) reportText += `- Reduced flow amount in the right VA. (${vafR} < 40ml/min)\n`;
             if (mainType === 'Abnormal' && vafL < 40) reportText += `- Reduced flow amount in the left VA. (${vafL} < 40ml/min)\n`;
             reportText += `- Total VA flow amount. (R+L= ${totalFlow}${totalFlow >= 100 ? '>100' : '<100'} ml/min)\n\n`;
 
-            const vaR_mm = vaUnit === 'cm' ? parseFloat(vaR) * 10 : parseFloat(vaR); const vaL_mm = vaUnit === 'cm' ? parseFloat(vaL) * 10 : parseFloat(vaL);
-            const isHypoR = (parseFloat(vaR) > 0 && vaR_mm < 2.2 && vafR < 40); const isHypoL = (parseFloat(vaL) > 0 && vaL_mm < 2.2 && vafL < 40);
+            const vaR_mm = vaUnit === 'cm' ? parseFloat(vaR) * 10 : parseFloat(vaR); 
+            const vaL_mm = vaUnit === 'cm' ? parseFloat(vaL) * 10 : parseFloat(vaL);
+            const isHypoR = (parseFloat(vaR) > 0 && vaR_mm < 2.2 && vafR < 40); 
+            const isHypoL = (parseFloat(vaL) > 0 && vaL_mm < 2.2 && vafL < 40);
 
-            if (vafR >= 40 && vafL >= 40 && totalFlow >= 100) { conclusions.push("Adequate total VA flow amount."); } 
-            else { 
+            if (vafR >= 40 && vafL >= 40 && totalFlow >= 100) { 
+                conclusions.push("Adequate total VA flow amount."); 
+            } else { 
                 let vaCondStr = "";
-                if (vafR < 40 && vafL < 40) { if (isHypoR && isHypoL) vaCondStr = "Bilateral VA hypoplasia"; else if (!isHypoR && !isHypoL) vaCondStr = "Bilateral VA stenosis"; else if (isHypoR && !isHypoL) vaCondStr = "Right VA hypoplasia and left VA stenosis"; else vaCondStr = "Right VA stenosis and left VA hypoplasia"; } 
-                else if (vafR < 40) { vaCondStr = `Right VA ${isHypoR ? 'hypoplasia' : 'stenosis'}`; } else if (vafL < 40) { vaCondStr = `Left VA ${isHypoL ? 'hypoplasia' : 'stenosis'}`; }
+                if (vafR < 40 && vafL < 40) { 
+                    if (isHypoR && isHypoL) vaCondStr = "Bilateral VA hypoplasia"; 
+                    else if (!isHypoR && !isHypoL) vaCondStr = "Bilateral VA stenosis"; 
+                    else if (isHypoR && !isHypoL) vaCondStr = "Right VA hypoplasia and left VA stenosis"; 
+                    else vaCondStr = "Right VA stenosis and left VA hypoplasia"; 
+                } else if (vafR < 40) { 
+                    vaCondStr = `Right VA ${isHypoR ? 'hypoplasia' : 'stenosis'}`; 
+                } else if (vafL < 40) { 
+                    vaCondStr = `Left VA ${isHypoL ? 'hypoplasia' : 'stenosis'}`; 
+                }
                 conclusions.push(`${vaCondStr} with ${totalFlow >= 100 ? 'adequate' : 'insufficient'} total VA flow amount.`); 
             }
 
             if (mainType === 'Abnormal') { 
                 severeVessels.forEach(sv => { 
                     if (sv.name.includes("ICA")) { 
-                        let pct = ""; let flowType = "high flow velocity"; let oaDir = "normal flow direction"; const p = parseFloat(sv.psv); const e = parseFloat(sv.edv); 
-                        if (!isNaN(p)) { if (p < 120) { pct = ">95%"; flowType = "trickle flow velocity"; oaDir = "reversed flow direction"; } else if (p >= 250 && e >= 145) { pct = "80-95%"; } else if (p >= 250 && e >= 100 && e <= 144) { pct = "70-80%"; } else if (p >= 200 && p <= 300 && e <= 99) { pct = "60-70%"; } else if (p >= 120 && p <= 199 && e <= 99) { pct = "50-60%"; } else { pct = ">50%"; } } else { pct = ">50%"; }
-                        let sSide = sv.name.includes("right") ? "right" : "left"; conclusions.push(`Severe stenosis (${pct}) with ${flowType} (PSV/EDV= ${sv.psv||'___'}/${sv.edv||'___'} cm/sec) in the ${sSide} ICA; ${oaDir} in the ${sSide} ophthalmic artery.`); 
-                    } else { conclusions.push(`Severe stenosis (>50%) with increased flow velocity in the ${sv.name}.`); } 
+                        let pct = ""; let flowType = "high flow velocity"; let oaDir = "normal flow direction"; 
+                        const p = parseFloat(sv.psv); const e = parseFloat(sv.edv); 
+                        if (!isNaN(p)) { 
+                            if (p < 120) { pct = ">95%"; flowType = "trickle flow velocity"; oaDir = "reversed flow direction"; } 
+                            else if (p >= 250 && e >= 145) { pct = "80-95%"; } 
+                            else if (p >= 250 && e >= 100 && e <= 144) { pct = "70-80%"; } 
+                            else if (p >= 200 && p <= 300 && e <= 99) { pct = "60-70%"; } 
+                            else if (p >= 120 && p <= 199 && e <= 99) { pct = "50-60%"; } 
+                            else { pct = ">50%"; } 
+                        } else { pct = ">50%"; }
+                        let sSide = sv.name.includes("right") ? "right" : "left"; 
+                        conclusions.push(`Severe stenosis (${pct}) with ${flowType} (PSV/EDV= ${sv.psv||'___'}/${sv.edv||'___'} cm/sec) in the ${sSide} ICA; ${oaDir} in the ${sSide} ophthalmic artery.`); 
+                    } else { 
+                        conclusions.push(`Severe stenosis (>50%) with increased flow velocity in the ${sv.name}.`); 
+                    } 
                 }); 
             }
-            if (isOA) conclusions.push("Normal flow direction in bilateral ophthalmic arteries.");
-            if (isSTA) { if (document.querySelector('input[name="sta_state"]:checked').value === 'normal') conclusions.push("The sampled bilateral STAs and OCAs were unremarkable."); else { const side = document.querySelector('input[name="sta_side"]:checked').value; let checkedVessels = []; let riStrings = []; if (document.getElementById('sta_check_sta').checked) { checkedVessels.push("STA"); riStrings.push(`STA RI [R/L]: ${document.getElementById('sta_ri_r').value || "-"}/${document.getElementById('sta_ri_l').value || "-"}`); } if (document.getElementById('sta_check_oca').checked) { checkedVessels.push("OCA"); riStrings.push(`OCA RI [R/L]: ${document.getElementById('oca_ri_r').value || "-"}/${document.getElementById('oca_ri_l').value || "-"}`); } if (checkedVessels.length > 0) conclusions.push(`Reduced flow resistance in the ${side} ${checkedVessels.join(" and ")} compared to the contralateral side. (${riStrings.join("; ")}) ${side.charAt(0).toUpperCase() + side.slice(1)} dural AV fistula could not be ruled out. Suggest brain CTA for survey.`); } }
-            if (isStent) { let sSide = document.querySelector('input[name="stent_side"]:checked').value; let sPsv = parseFloat(document.getElementById('stent_psv').value) || 0; let sEdv = document.getElementById('stent_edv').value || "0"; if (sPsv < 175) conclusions.push(`Stent was set from the ${sSide} ICA to CCA with normal in-stent flow velocity. (PSV/EDV=${sPsv}/${sEdv} cm/s)`); else conclusions.push(`Stent was set from the ${sSide} ICA to CCA with increased in-stent flow velocity (PSV/EDV=${sPsv}/${sEdv} cm/s), indicating in-stent re-stenosis.`); }
-            if (isSteal) { let side = document.querySelector('input[name="steal_side"]:checked').value; let stage = document.querySelector('input[name="steal_stage"]:checked').value; let wave = document.querySelector('input[name="steal_wave"]:checked').value; if (stage === 'early') conclusions.push(`Bunny waveform in the ${side} VA with ${wave} waveform in the ${side} subclavian artery, indicating early stage of subclavian steal phenomenon due to stenosis in the ${side} proximal subclavian artery.`); else conclusions.push(`Biphasic waveform/reversed flow direction in the ${side} VA with ${wave} waveform in the ${side} subclavian artery, indicating late stage of ${side} subclavian steal phenomenon due to stenosis in the ${side} proximal subclavian artery.`); }
-            reportText += `Conclusion:\n` + conclusions.map((c, i) => `${i+1}. ${c}`).join("\n"); reportBox.value = reportText.trim();
+
+            // ==========================================
+            // 附加模組結論區塊 (OA, STA, Stent, Steal)
+            // ==========================================
+            if (isOA) {
+                conclusions.push("Normal flow direction in bilateral ophthalmic arteries.");
+            }
+            
+            if (isSTA) { 
+                if (document.querySelector('input[name="sta_state"]:checked').value === 'normal') {
+                    conclusions.push("The sampled bilateral STAs and OCAs were unremarkable."); 
+                } else { 
+                    const side = document.querySelector('input[name="sta_side"]:checked').value; 
+                    let checkedVessels = []; let riStrings = []; 
+                    if (document.getElementById('sta_check_sta').checked) { 
+                        checkedVessels.push("STA"); 
+                        riStrings.push(`STA RI [R/L]: ${document.getElementById('sta_ri_r').value || "-"}/${document.getElementById('sta_ri_l').value || "-"}`); 
+                    } 
+                    if (document.getElementById('sta_check_oca').checked) { 
+                        checkedVessels.push("OCA"); 
+                        riStrings.push(`OCA RI [R/L]: ${document.getElementById('oca_ri_r').value || "-"}/${document.getElementById('oca_ri_l').value || "-"}`); 
+                    } 
+                    if (checkedVessels.length > 0) {
+                        conclusions.push(`Reduced flow resistance in the ${side} ${checkedVessels.join(" and ")} compared to the contralateral side. (${riStrings.join("; ")}) ${side.charAt(0).toUpperCase() + side.slice(1)} dural AV fistula could not be ruled out. Suggest brain CTA for survey.`); 
+                    }
+                } 
+            }
+            
+            if (isStent) { 
+                let sSide = document.querySelector('input[name="stent_side"]:checked').value; 
+                let sPsv = parseFloat(document.getElementById('stent_psv').value) || 0; 
+                let sEdv = document.getElementById('stent_edv').value || "0"; 
+                if (sPsv < 175) {
+                    conclusions.push(`Stent was set from the ${sSide} ICA to CCA with normal in-stent flow velocity. (PSV/EDV=${sPsv}/${sEdv} cm/s)`); 
+                } else {
+                    conclusions.push(`Stent was set from the ${sSide} ICA to CCA with increased in-stent flow velocity (PSV/EDV=${sPsv}/${sEdv} cm/s), indicating in-stent re-stenosis.`); 
+                }
+            }
+            
+            if (isSteal) { 
+                // 核心修正：正確抓取 <select> 的 ID，避免當機
+                let side = document.getElementById('steal_side').value; 
+                let stage = document.getElementById('steal_stage').value; 
+                let wave = document.getElementById('steal_wave').value; 
+                
+                if (stage === 'early') {
+                    conclusions.push(`Bunny waveform in the ${side} VA with ${wave} waveform in the ${side} subclavian artery, indicating early stage of subclavian steal phenomenon due to stenosis in the ${side} proximal subclavian artery.`); 
+                } else {
+                    conclusions.push(`Biphasic waveform/reversed flow direction in the ${side} VA with ${wave} waveform in the ${side} subclavian artery, indicating late stage of ${side} subclavian steal phenomenon due to stenosis in the ${side} proximal subclavian artery.`); 
+                }
+            }
+
+            reportText += `Conclusion:\n` + conclusions.map((c, i) => `${i+1}. ${c}`).join("\n"); 
+            reportBox.value = reportText.trim();
         }
 
         function generateTCDReport(reportBox) {
