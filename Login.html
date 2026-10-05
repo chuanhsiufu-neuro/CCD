@@ -11,6 +11,7 @@
     .btn { background-color: #4CAF50; color: white; padding: 12px 24px; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; width: 100%; margin-top:10px;}
     .btn:hover { background-color: #45a049; }
     .upload-section { background-color: #e3f2fd; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+    .debug-section { background-color: #ffebee; padding: 15px; border-radius: 5px; border: 1px dashed #f44336; margin-bottom: 20px; }
 </style>
 
 <div class="container">
@@ -25,6 +26,12 @@
         <input type="file" id="image_input" accept="image/*">
         <button class="btn" style="background-color: #2196F3; width: auto; padding: 8px 16px;" onclick="processImage()">開始 AI 辨識</button>
         <div id="status_msg" style="color: blue; margin-top: 10px; font-weight: bold;"></div>
+    </div>
+
+    <!-- 除錯視窗：顯示 AI 原始回傳資料 -->
+    <div class="debug-section">
+        <label style="color: #d32f2f;"><strong>🛠️ 除錯視窗：AI 實際回傳的原始文字</strong></label>
+        <textarea id="raw_ai_output" style="width: 100%; height: 100px; margin-top: 10px; font-family: monospace; font-size: 14px;" readonly placeholder="AI 回傳的原始資料會顯示在這裡，方便檢查格式與抓取的數字是否正確..."></textarea>
     </div>
 
     <!-- 數據確認區 -->
@@ -126,6 +133,7 @@
         const apiKey = document.getElementById('api_key').value;
         const fileInput = document.getElementById('image_input');
         const statusMsg = document.getElementById('status_msg');
+        const rawOutputBox = document.getElementById('raw_ai_output');
 
         if (!apiKey) {
             alert('請輸入 Gemini API Key');
@@ -141,6 +149,7 @@
 
         statusMsg.innerText = "⏳ 正在將照片上傳至 AI 分析，請稍候...";
         statusMsg.style.color = "blue";
+        rawOutputBox.value = ""; // 清空舊的除錯訊息
 
         const file = fileInput.files[0];
         const reader = new FileReader();
@@ -176,12 +185,15 @@
                         {text: promptText},
                         {inlineData: {mimeType: file.type, data: base64Data}}
                     ]
-                }]
+                }],
+                generationConfig: {
+                    responseMimeType: "application/json"
+                }
             };
 
             try {
-                // 直接使用 Google 官方指定的最新模型 gemini-3.8-flash
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${apiKey}`, {
+                // 使用官方最穩定的 gemini-1.5-flash 模型
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`, {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
                     body: JSON.stringify(requestBody)
@@ -193,13 +205,23 @@
                     console.error("API 錯誤:", result.error);
                     statusMsg.innerText = "❌ 辨識失敗：" + result.error.message;
                     statusMsg.style.color = "red";
+                    rawOutputBox.value = "伺服器錯誤訊息：\n" + JSON.stringify(result.error, null, 2);
                     return;
                 }
 
                 if (result.candidates && result.candidates.length > 0) {
                     let aiText = result.candidates[0].content.parts[0].text;
-                    aiText = aiText.replace(/```json/g, '').replace(/```/g, '').trim();
                     
+                    // 👉 第一時間將 AI 的原始文字印到除錯視窗，方便您直接檢查
+                    rawOutputBox.value = aiText;
+                    
+                    let jsonStart = aiText.indexOf('{');
+                    let jsonEnd = aiText.lastIndexOf('}');
+                    
+                    if (jsonStart !== -1 && jsonEnd !== -1) {
+                        aiText = aiText.substring(jsonStart, jsonEnd + 1);
+                    }
+
                     try {
                         const extractedData = JSON.parse(aiText);
                         
@@ -211,19 +233,21 @@
                         statusMsg.innerText = "✅ 辨識完成！請核對數據。";
                         statusMsg.style.color = "green";
                     } catch (e) {
-                        console.error("JSON 解析錯誤:", e, aiText);
-                        statusMsg.innerText = "❌ AI 回傳格式錯誤，請再試一次。";
+                        console.error("JSON 解析錯誤:", e, "\nAI 原始回傳內容:", aiText);
+                        statusMsg.innerText = "❌ 解析失敗，請檢查上方『除錯視窗』內的格式是否有誤。";
                         statusMsg.style.color = "red";
                     }
                 } else {
-                    statusMsg.innerText = "❌ 辨識失敗，請重試。";
+                    statusMsg.innerText = "❌ 辨識失敗，無回傳資料。";
                     statusMsg.style.color = "red";
+                    rawOutputBox.value = "沒有收到任何回傳內容。";
                 }
 
             } catch (error) {
                 console.error("連線錯誤:", error);
                 statusMsg.innerText = "❌ 發生連線錯誤，請檢查網路狀態。";
                 statusMsg.style.color = "red";
+                rawOutputBox.value = "連線失敗：" + error.toString();
             }
         };
 
