@@ -115,7 +115,6 @@
 </div>
 
 <script>
-    // --- 新增：網頁載入時自動讀取記憶中的 API Key ---
     window.onload = function() {
         var savedKey = localStorage.getItem('gemini_api_key');
         if (savedKey) {
@@ -123,7 +122,6 @@
         }
     };
 
-    // --- 區塊 1: 處理圖片與呼叫 Gemini API ---
     async function processImage() {
         const apiKey = document.getElementById('api_key').value;
         const fileInput = document.getElementById('image_input');
@@ -134,7 +132,6 @@
             return;
         }
         
-        // --- 新增：將使用者輸入的 API Key 存入本機瀏覽器記憶 ---
         localStorage.setItem('gemini_api_key', apiKey);
 
         if (!fileInput.files.length) {
@@ -177,7 +174,8 @@
                 contents: [{
                     parts: [
                         {text: promptText},
-                        {inline_data: {mime_type: file.type, data: base64Data}}
+                        // ↓ 就是這裡！修正為 Google 規定的 camelCase 寫法 ↓
+                        {inlineData: {mimeType: file.type, data: base64Data}}
                     ]
                 }]
             };
@@ -191,27 +189,40 @@
 
                 const result = await response.json();
                 
+                if (result.error) {
+                    console.error("API 錯誤:", result.error);
+                    statusMsg.innerText = "❌ 辨識失敗：" + result.error.message;
+                    statusMsg.style.color = "red";
+                    return;
+                }
+
                 if (result.candidates && result.candidates.length > 0) {
                     let aiText = result.candidates[0].content.parts[0].text;
                     aiText = aiText.replace(/```json/g, '').replace(/```/g, '').trim();
                     
-                    const extractedData = JSON.parse(aiText);
-                    
-                    for (const key in extractedData) {
-                        if (document.getElementById(key)) {
-                            document.getElementById(key).value = extractedData[key];
+                    try {
+                        const extractedData = JSON.parse(aiText);
+                        
+                        for (const key in extractedData) {
+                            if (document.getElementById(key)) {
+                                document.getElementById(key).value = extractedData[key];
+                            }
                         }
+                        statusMsg.innerText = "✅ 辨識完成！請核對數據。";
+                        statusMsg.style.color = "green";
+                    } catch (e) {
+                        console.error("JSON 解析錯誤:", e, aiText);
+                        statusMsg.innerText = "❌ AI 回傳格式錯誤，請再試一次。";
+                        statusMsg.style.color = "red";
                     }
-                    statusMsg.innerText = "✅ 辨識完成！請核對數據。";
-                    statusMsg.style.color = "green";
                 } else {
                     statusMsg.innerText = "❌ 辨識失敗，請確認 API Key 或重試。";
                     statusMsg.style.color = "red";
                 }
 
             } catch (error) {
-                console.error(error);
-                statusMsg.innerText = "❌ 發生錯誤，請檢查網路連線或 API 狀態。";
+                console.error("連線錯誤:", error);
+                statusMsg.innerText = "❌ 發生連線錯誤，請檢查網路狀態。";
                 statusMsg.style.color = "red";
             }
         };
@@ -219,7 +230,6 @@
         reader.readAsDataURL(file);
     }
 
-    // --- 區塊 2: 處理 VBScript 生成與複製 ---
     function copyVBSCode() {
         var vbsContent = 'Set WshShell = WScript.CreateObject("WScript.Shell")\n';
         vbsContent += 'WScript.Sleep 3000\n\n';
